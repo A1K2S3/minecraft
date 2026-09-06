@@ -3,23 +3,23 @@
 ## Dalit
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Adarsh077/minecraft/main/install.ps1))) -dalit
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Adarsh077/minecraft/main/client/install.ps1))) -dalit
 ```
 
 ## Pandit
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Adarsh077/minecraft/main/install.ps1))) -pandit
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Adarsh077/minecraft/main/client/install.ps1))) -pandit
 ```
 
 ## Modi
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Adarsh077/minecraft/main/install.ps1))) -modi
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Adarsh077/minecraft/main/client/install.ps1))) -modi
 ```
 
 ## Linux / macOS
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Adarsh077/minecraft/main/install.sh | sh -s -- --dalit
+curl -fsSL https://raw.githubusercontent.com/Adarsh077/minecraft/main/client/install.sh | sh -s -- --dalit
 ```

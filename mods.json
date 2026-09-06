@@ -1,0 +1,582 @@
+{
+  "minecraft": "1.21.11",
+  "loader": "fabric",
+  "loader_version": "0.19.3",
+  "server_default_version_type": "beta",
+  "client_tiers": [
+    "dalit",
+    "pandit",
+    "modi"
+  ],
+  "mods": [
+    {
+      "name": "spark",
+      "slug": "spark",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Fabric API",
+      "slug": "fabric-api",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "6qAuTtLR",
+      "client_tiers": null
+    },
+    {
+      "name": "Lithium",
+      "slug": "lithium",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "Ow7wA0kG",
+      "client_tiers": null
+    },
+    {
+      "name": "FerriteCore",
+      "slug": "ferrite-core",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "Ii0gP3D8",
+      "client_tiers": null
+    },
+    {
+      "name": "Balm",
+      "slug": "balm",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "5POKgjJn",
+      "client_tiers": null
+    },
+    {
+      "name": "Forge Config API Port",
+      "slug": "forge-config-api-port",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "uXrWPsCu",
+      "client_tiers": null
+    },
+    {
+      "name": "Polymer",
+      "slug": "polymer",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "MidnightLib",
+      "slug": "midnightlib",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "Also a client dependency: Cull Leaves and other client mods hard-require it, so it must stay in mods/.",
+      "client_version": "jkodor79",
+      "client_tiers": null
+    },
+    {
+      "name": "Puzzles Lib",
+      "slug": "puzzles-lib",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "xTX7sOwU",
+      "client_tiers": null
+    },
+    {
+      "name": "Universal Graves",
+      "slug": "universal-graves",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Repurposed Structures - Fabric",
+      "slug": "repurposed-structures-fabric",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "FallingTree",
+      "slug": "fallingtree",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Just Enough Items (JEI)",
+      "slug": "jei",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "vyofGDrh",
+      "client_tiers": null
+    },
+    {
+      "name": "Saturated Eating",
+      "slug": "saturated-eating",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Waystones",
+      "slug": "waystones",
+      "side": "both",
+      "type": "mod",
+      "version": "21.11.9+fabric-1.21.11",
+      "notes": "",
+      "client_version": "MydMW2TT",
+      "client_tiers": null
+    },
+    {
+      "name": "Traveler's Backpack",
+      "slug": "travelersbackpack",
+      "side": "both",
+      "type": "mod",
+      "version": "1.21.11-10.11.10",
+      "notes": "",
+      "client_version": "LfmQsEdR",
+      "client_tiers": null
+    },
+    {
+      "name": "Biomes O' Plenty",
+      "slug": "biomes-o-plenty",
+      "side": "both",
+      "type": "mod",
+      "version": "21.11.0.32",
+      "notes": "",
+      "client_version": "JJKbM72H",
+      "client_tiers": null
+    },
+    {
+      "name": "TerraBlender",
+      "slug": "terrablender",
+      "side": "both",
+      "type": "mod",
+      "version": "21.11.0.0",
+      "notes": "",
+      "client_version": "chxo508B",
+      "client_tiers": null
+    },
+    {
+      "name": "GlitchCore",
+      "slug": "glitchcore",
+      "side": "both",
+      "type": "mod",
+      "version": "21.11.0.4",
+      "notes": "",
+      "client_version": "CO7NeLTt",
+      "client_tiers": null
+    },
+    {
+      "name": "Storage Drawers",
+      "slug": "storagedrawers",
+      "side": "both",
+      "type": "mod",
+      "version": "1.21.11-20.0.0",
+      "notes": "",
+      "client_version": "Q9r8LMQL",
+      "client_tiers": null
+    },
+    {
+      "name": "Carry On",
+      "slug": "carry-on",
+      "side": "both",
+      "type": "mod",
+      "version": "2.9.2",
+      "notes": "",
+      "client_version": "KOFV3duz",
+      "client_tiers": null
+    },
+    {
+      "name": "Farmer's Delight Refabricated",
+      "slug": "farmers-delight-refabricated",
+      "side": "both",
+      "type": "mod",
+      "version": "1.21.11-3.6.13",
+      "notes": "",
+      "client_version": "yXs9snmN",
+      "client_tiers": null
+    },
+    {
+      "name": "Adorn",
+      "slug": "adorn",
+      "side": "both",
+      "type": "mod",
+      "version": "7.6.1-fabric",
+      "notes": "",
+      "client_version": "tyOUUBLZ",
+      "client_tiers": null
+    },
+    {
+      "name": "MDM (formerly Modern Decorations Mod)",
+      "slug": "modern-decorations-mod",
+      "side": "both",
+      "type": "mod",
+      "version": "26.7.0",
+      "notes": "",
+      "client_version": "q1Kv9EdP",
+      "client_tiers": null
+    },
+    {
+      "name": "Fantastic Wings",
+      "slug": "fantastic-wings",
+      "side": "both",
+      "type": "mod",
+      "version": "21.11.1",
+      "notes": "",
+      "client_version": "5zJKhkHi",
+      "client_tiers": null
+    },
+    {
+      "name": "Towers of the Wild: Reworked",
+      "slug": "towers-of-the-wild-reworked",
+      "side": "server",
+      "type": "datapack",
+      "version": "Pr8Jhst4",
+      "notes": "Loaded as a datapack. Pin Pr8Jhst4 is Modrinth version v4.4.4."
+    },
+    {
+      "name": "Create Fly",
+      "slug": "create-fly",
+      "side": "both",
+      "type": "mod",
+      "version": "1.21.11-6.0.9-5",
+      "notes": "",
+      "client_version": "fn0H9rSj",
+      "client_tiers": null
+    },
+    {
+      "name": "CC: Tweaked",
+      "slug": "cc-tweaked",
+      "side": "both",
+      "type": "mod",
+      "version": "1.117.1",
+      "notes": "",
+      "client_version": "IikPYYtH",
+      "client_tiers": null
+    },
+    {
+      "name": "Expanded Weaponry",
+      "slug": "expanded-weaponry",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "91zQqaH6",
+      "client_tiers": null
+    },
+    {
+      "name": "Animal Feeding Trough",
+      "slug": "animal_feeding_trough",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "aTRE6QT1",
+      "client_tiers": null
+    },
+    {
+      "name": "Connectible Chains [Fabric]",
+      "slug": "connectiblechains",
+      "side": "both",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "h8RIIOQq",
+      "client_tiers": null
+    },
+    {
+      "name": "Concurrent Chunk Management Engine (Fabric)",
+      "slug": "c2me-fabric",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Lithostitched",
+      "slug": "lithostitched",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Terralith",
+      "slug": "terralith",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": ""
+    },
+    {
+      "name": "Towns and Towers",
+      "slug": "towns-and-towers",
+      "side": "server",
+      "type": "datapack",
+      "version": null,
+      "notes": "Loaded as a datapack."
+    },
+    {
+      "name": "3D Skin Layers",
+      "slug": "3dskinlayers",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "3kCdl1bI",
+      "client_tiers": null
+    },
+    {
+      "name": "AmbientSounds",
+      "slug": "ambientsounds",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "JZUqW70J",
+      "client_tiers": null
+    },
+    {
+      "name": "Architectury API",
+      "slug": "architectury-api",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "uNdfrcQ8",
+      "client_tiers": null
+    },
+    {
+      "name": "Cloth Config API",
+      "slug": "cloth-config",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "xuX40TN5",
+      "client_tiers": null
+    },
+    {
+      "name": "Complementary Shaders - Unbound",
+      "slug": "complementary-unbound",
+      "side": "client",
+      "type": "shaderpack",
+      "version": null,
+      "notes": "Shaderpack, installed to shaderpacks/. Shader tiers only; profile MEDIUM (pandit) / HIGH (modi).",
+      "client_version": "VMHXIk50",
+      "client_tiers": [
+        "pandit",
+        "modi"
+      ]
+    },
+    {
+      "name": "Continuity",
+      "slug": "continuity",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "mX1iknM1",
+      "client_tiers": null
+    },
+    {
+      "name": "CreativeCore",
+      "slug": "creativecore",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "jyLHWJlj",
+      "client_tiers": null
+    },
+    {
+      "name": "Cull Leaves",
+      "slug": "cull-leaves",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "yrL6pwHZ",
+      "client_tiers": null
+    },
+    {
+      "name": "[ETF] Entity Texture Features",
+      "slug": "entitytexturefeatures",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "9uQFLvtW",
+      "client_tiers": null
+    },
+    {
+      "name": "Fabric Language Kotlin",
+      "slug": "fabric-language-kotlin",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "bdhiINYC",
+      "client_tiers": null
+    },
+    {
+      "name": "ImmediatelyFast",
+      "slug": "immediatelyfast",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "4EwhsTu7",
+      "client_tiers": null
+    },
+    {
+      "name": "Inventory Profiles Next",
+      "slug": "inventory-profiles-next",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "YKjWPbto",
+      "client_tiers": null
+    },
+    {
+      "name": "Iris Shaders",
+      "slug": "iris",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "Shader loader. Shader tiers only. Hard-pins Sodium 0.8.7.",
+      "client_version": "fDpuVzVr",
+      "client_tiers": [
+        "pandit",
+        "modi"
+      ]
+    },
+    {
+      "name": "Jade \ud83d\udd0d",
+      "slug": "jade",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "swJhAyak",
+      "client_tiers": null
+    },
+    {
+      "name": "LambDynamicLights - Dynamic Lights",
+      "slug": "lambdynamiclights",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "5Tp7kdU0",
+      "client_tiers": null
+    },
+    {
+      "name": "libIPN",
+      "slug": "libipn",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "ByG214OZ",
+      "client_tiers": null
+    },
+    {
+      "name": "Modflared",
+      "slug": "modflared",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "Cloudflare tunnel client. install writes config/modflared/forced_tunnels.json for minecraft.dekhlo.to.",
+      "client_version": "ylsFkqBg",
+      "client_tiers": null
+    },
+    {
+      "name": "Presence Footsteps",
+      "slug": "presence-footsteps",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "xjmToylJ",
+      "client_tiers": null
+    },
+    {
+      "name": "PresenceFootsteps: Remastered Sounds Pack",
+      "slug": "presense-footsteps-sounds",
+      "side": "client",
+      "type": "resourcepack",
+      "version": null,
+      "notes": "Sound pack for Presence Footsteps. Installed to resourcepacks/ and enabled in options.txt.",
+      "client_version": "yAgMm4Uo",
+      "client_tiers": null
+    },
+    {
+      "name": "Sodium",
+      "slug": "sodium",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "Base Sodium build, non-shader tier only. Iris hard-pins Sodium 0.8.7, so the shader tiers use the other sodium entry instead. Never install both.",
+      "client_version": "vqUoGREs",
+      "client_tiers": [
+        "dalit"
+      ]
+    },
+    {
+      "name": "Sodium (shader tiers)",
+      "slug": "sodium",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "The Sodium build Iris 1.10.7 hard-pins. Shader tiers only; replaces the base Sodium build.",
+      "client_version": "UddlN6L4",
+      "client_tiers": [
+        "pandit",
+        "modi"
+      ]
+    },
+    {
+      "name": "Sound Physics Remastered",
+      "slug": "sound-physics-remastered",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "pfqxi9qs",
+      "client_tiers": null
+    },
+    {
+      "name": "VoxelMap-Updated",
+      "slug": "voxelmap-updated",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "tRdGJKGE",
+      "client_tiers": null
+    }
+  ]
+}

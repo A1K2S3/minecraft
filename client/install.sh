@@ -11,100 +11,35 @@ FABRIC_PROFILE_URL="https://meta.fabricmc.net/v2/versions/loader/${FABRIC_MC_VER
 # --- modflared forced-tunnels config (written into the game dir during install) ---
 FORCED_TUNNELS_JSON='["minecraft.dekhlo.to"]'
 
-# NOTE: midnightlib-fabric- is intentionally NOT server-only: Cull Leaves (and other
-# client mods) hard-require it ("midnightlib": "*"), so it must stay in mods/.
-SERVER_ONLY_PREFIXES="graves- polymer-bundled- repurposed_structures- FallingTree-"
-
-# --- shader stack (installed for pandit/modi only) ---
-# Iris 1.10.7 hard-pins Sodium 0.8.7, which replaces the base 0.8.14-beta.2 for
-# shader tiers -- never both. dalit keeps 0.8.14-beta.2 and installs no Iris.
-SODIUM_BASE_JAR="sodium-fabric-0.8.14-beta.2+mc1.21.11.jar"
-SODIUM_SHADERS_JAR="sodium-fabric-0.8.7+mc1.21.11.jar"
-SODIUM_SHADERS_URL="https://cdn.modrinth.com/data/AANobbMI/versions/UddlN6L4/sodium-fabric-0.8.7%2Bmc1.21.11.jar"
-SODIUM_SHADERS_SHA256="c08fae86b350aaa8a8f37e7347929df38f01cc2348cf31c322615564bdc53983"
-IRIS_JAR="iris-fabric-1.10.7+mc1.21.11.jar"
-IRIS_URL="https://cdn.modrinth.com/data/YL57xq9U/versions/fDpuVzVr/iris-fabric-1.10.7%2Bmc1.21.11.jar"
-IRIS_SHA256="58c55da18189c91a49f847d3cee451633a23b575fb69c0c5b65ddb274436cb19"
-SHADERPACK_ZIP="ComplementaryUnbound_r5.8.1.zip"
-SHADERPACK_URL="https://cdn.modrinth.com/data/R6NEzAwj/versions/VMHXIk50/ComplementaryUnbound_r5.8.1.zip"
-SHADERPACK_SHA256="bb89b1fc54687d4147a837fb2e3c3f7261a13bee51819761e9b6a91cb7915965"
-
-# --- resourcepack (downloaded into <gamedir>/resourcepacks/; note the space in the name) ---
-RESOURCEPACK_NAME="Presence Footsteps R3.zip"
-RESOURCEPACK_SHA256="d33bf876c957a0c2f570f55586948440d9cb849b549d744d26d80733f5ec286f"
-RESOURCEPACK_URL="https://cdn.modrinth.com/data/qSJqZIl1/versions/yAgMm4Uo/Presence%20Footsteps%20R3.zip"
-
-# --- 37 mod jars downloaded from the Modrinth CDN: "filename sha256 url" per line ---
-# Every URL was resolved by SHA-512 lookup against the Modrinth API, so each serves
-# exactly the bytes its SHA-256 names. Do not substitute URLs or versions; keep the
-# %2B / %20 escapes intact. Installed to <gamedir>/mods/ (all tiers).
-MODS_TABLE='
-Adorn-7.6.1+1.21.11-fabric.jar d431be4ee89d0d71b1ababedaa5275f478cfff5de94eba1165f5cd10d1b676d3 https://cdn.modrinth.com/data/E6FUtRJh/versions/tyOUUBLZ/Adorn-7.6.1%2B1.21.11-fabric.jar
-AmbientSounds_FABRIC_v6.3.5_mc1.21.11.jar e2a657ad18fcc4382418dcff9ddc411ae4912001c8cb90766020bb7cfdcbb9fb https://cdn.modrinth.com/data/fM515JnW/versions/JZUqW70J/AmbientSounds_FABRIC_v6.3.5_mc1.21.11.jar
-animal_feeding_trough-1.2.0+1.21.11.jar e4a62c4a6427a3779c3507c41901a57238d44c7665f29bdb9c4b5f653d3ab92c https://cdn.modrinth.com/data/bRFWnJ87/versions/aTRE6QT1/animal_feeding_trough-1.2.0%2B1.21.11.jar
-carryon-fabric-1.21.11-2.9.2.jar ac6c68baf2cbffef7de6739423aa615f151c8f1601bacf30921c8bd88f3f932d https://cdn.modrinth.com/data/joEfVgkn/versions/KOFV3duz/carryon-fabric-1.21.11-2.9.2.jar
-cc-tweaked-1.21.11-fabric-1.117.1.jar ba773f0a6a942a8f5d628689470299ebe5e362a931993bda8c4f232f42556494 https://cdn.modrinth.com/data/gu7yAYhd/versions/IikPYYtH/cc-tweaked-1.21.11-fabric-1.117.1.jar
-cloth-config-21.11.153-fabric.jar 8a40c84e5ecde525acfb6c4e13b8002dacfca3ef9534d7faf6e8049656f423c8 https://cdn.modrinth.com/data/9s6osm5g/versions/xuX40TN5/cloth-config-21.11.153-fabric.jar
-connectiblechains-2.5.7+1.21.11.jar ee37964f95329511c789c323d7d3b047423e0b69f93ba26f751a293183e354dd https://cdn.modrinth.com/data/ykSfIgTw/versions/h8RIIOQq/connectiblechains-2.5.7%2B1.21.11.jar
-continuity-3.0.1-beta.1+1.21.11.jar 1d4d4e86fb20bd0b078fcc518f4641d21985cc8bfaefa6dd49cfa1beff52ac83 https://cdn.modrinth.com/data/1IjD5062/versions/mX1iknM1/continuity-3.0.1-beta.1%2B1.21.11.jar
-create-fly-1.21.11-6.0.9-5.jar 55f59380921fada030cd1adaba950393d492f731c2e4d982294d34258c739b9b https://cdn.modrinth.com/data/dKvj0eNn/versions/fn0H9rSj/create-fly-1.21.11-6.0.9-5.jar
-CreativeCore_FABRIC_v2.14.11_mc1.21.11.jar a8e759b023b2de920022d32d1e09bd3c6c9ad32546ccc114f1951100c58984d8 https://cdn.modrinth.com/data/OsZiaDHq/versions/jyLHWJlj/CreativeCore_FABRIC_v2.14.11_mc1.21.11.jar
-cullleaves-fabric-4.1.1.1+1.21.11.jar fc82497837bdb26d50468383da79fd12aecb2a51d09d94c892baaa55cd3829d3 https://cdn.modrinth.com/data/GNxdLCoP/versions/yrL6pwHZ/cullleaves-fabric-4.1.1.1%2B1.21.11.jar
-entity_texture_features-7.2.1-1.21.11-fabric.jar a5630cef60a8d13d77f2fd9e56de6fd0381187a1bfca4713e8e5f276f235c50e https://cdn.modrinth.com/data/BVzZfTc1/versions/9uQFLvtW/entity_texture_features-7.2.1-1.21.11-fabric.jar
-expanded_weaponry-0.8.jar 4c1175a1e31780d05c3cc7b2c924a20d0df887c712218e8cc3c8d49c7200b1be https://cdn.modrinth.com/data/q8rZUpjS/versions/91zQqaH6/expanded_weaponry-0.8.jar
-fabric-api-0.141.6+1.21.11.jar bdff7fd7e220085cfad2ff9b1f40dde6534ae0b96cf378f97a374bc54cb9ed0f https://cdn.modrinth.com/data/P7dR8mSH/versions/6qAuTtLR/fabric-api-0.141.6%2B1.21.11.jar
-fabric-language-kotlin-1.13.13+kotlin.2.4.10.jar 34ccdacf13bb9351fe43ce61912c2e09b72364e43e787d36ba3d2d04dec75a52 https://cdn.modrinth.com/data/Ha28R6CL/versions/bdhiINYC/fabric-language-kotlin-1.13.13%2Bkotlin.2.4.10.jar
-FantasticWings-v21.11.1-mc1.21.11-Fabric.jar b7cc2eb1814fe5c5eb3b0b3e6af399d4be0bcda44af3bd9b02994fdd6f3d7e43 https://cdn.modrinth.com/data/iGEcTqwK/versions/5zJKhkHi/FantasticWings-v21.11.1-mc1.21.11-Fabric.jar
-FarmersDelight-1.21.11-3.6.13+refabricated.jar 3b3caa7a3c9b7ddc0a28f620ec729da6ab00a181fd8667de104324a5bb9015d1 https://cdn.modrinth.com/data/7vxePowz/versions/yXs9snmN/FarmersDelight-1.21.11-3.6.13%2Brefabricated.jar
-ferritecore-8.2.0-fabric.jar f76bd760cbf48280cc7c43180f5089a46235fa24d934a8acf3da04a664c2c715 https://cdn.modrinth.com/data/uXXizFIs/versions/Ii0gP3D8/ferritecore-8.2.0-fabric.jar
-ForgeConfigAPIPort-v21.11.1-mc1.21.11-Fabric.jar 31a0686904fad1cfdeb1d6b011ac1c2280990d6e76ac2416468147e2246b4db1 https://cdn.modrinth.com/data/ohNO6lps/versions/uXrWPsCu/ForgeConfigAPIPort-v21.11.1-mc1.21.11-Fabric.jar
-ImmediatelyFast-Fabric-1.14.3+1.21.11.jar c6e939744ed80345a1a70c351c481b8832d33970d6574b8d444dfe750abc2a86 https://cdn.modrinth.com/data/5ZwdcRci/versions/4EwhsTu7/ImmediatelyFast-Fabric-1.14.3%2B1.21.11.jar
-InventoryProfilesNext-fabric-1.21.11-2.2.6.jar 1d971f0f624c8f2d2693004aff96cb9546d65e3ab950d63563c769242d2c6474 https://cdn.modrinth.com/data/O7RBXm3n/versions/YKjWPbto/InventoryProfilesNext-fabric-1.21.11-2.2.6.jar
-Jade-1.21.11-Fabric-21.1.6.jar bcf1a7f6f9eb325b89d65bc15b41a35fdca2c2b052e9af772ffdcd70548d2fc8 https://cdn.modrinth.com/data/nvQzSEkH/versions/swJhAyak/Jade-1.21.11-Fabric-21.1.6.jar
-jei-1.21.11-fabric-27.23.0.71.jar e904a724d7e2b5b2382b1f46f8d3efe84cb6a955ee6fe5310e8a173cf881ffb6 https://cdn.modrinth.com/data/u6dRKJwZ/versions/vyofGDrh/jei-1.21.11-fabric-27.23.0.71.jar
-lambdynamiclights-4.9.1+1.21.11.jar 99bcfbb13cbd7c98ec9574c2959a1c6a145aac26efed54bcb32ebf08abf9282c https://cdn.modrinth.com/data/yBW8D80W/versions/5Tp7kdU0/lambdynamiclights-4.9.1%2B1.21.11.jar
-libIPN-fabric-1.21.11-6.6.3.jar 94a52d56ec41e31a98089aeff07baf25534986922d572eac85475b5e2736c9af https://cdn.modrinth.com/data/onSQdWhM/versions/ByG214OZ/libIPN-fabric-1.21.11-6.6.3.jar
-lithium-fabric-0.21.4+mc1.21.11.jar 5135c41da5b43cbdcb29424bde65195143ac4084e23834c8eac065942201c78b https://cdn.modrinth.com/data/gvQqBUqZ/versions/Ow7wA0kG/lithium-fabric-0.21.4%2Bmc1.21.11.jar
-midnightlib-fabric-1.9.3+1.21.11.jar 515dcc1602a3e560c2e8c7c5672af661a92bbddb1a6e2acaead3176773cf446f https://cdn.modrinth.com/data/codAaoxh/versions/jkodor79/midnightlib-fabric-1.9.3%2B1.21.11.jar
-modflared-1.6.0+release.129.jar 5389a4c89dc91ad1edabff96c92d98cec85a5fc0a6e8120885f04cfd3f371943 https://cdn.modrinth.com/data/uRHq6kbO/versions/ylsFkqBg/modflared-1.6.0%2Brelease.129.jar
-PresenceFootsteps-1.12.4+1.21.11.jar c333a4f82696b38ed0fd0558878dce67489c6105b00fafe01cccba73155ae569 https://cdn.modrinth.com/data/rcTfTZr3/versions/xjmToylJ/PresenceFootsteps-1.12.4%2B1.21.11.jar
-PuzzlesLib-v21.11.13-mc1.21.11-Fabric.jar 1c7b062f4d4fd4c830dbaa875da01706ef85f072969191d8c1affef693a66b82 https://cdn.modrinth.com/data/QAGBst4M/versions/xTX7sOwU/PuzzlesLib-v21.11.13-mc1.21.11-Fabric.jar
-skinlayers3d-fabric-1.11.2-mc1.21.11.jar 31243ee08b76b3dab71d7761963f317125c536f6b8984795e7b02811b4f80e97 https://cdn.modrinth.com/data/zV5r3pPn/versions/3kCdl1bI/skinlayers3d-fabric-1.11.2-mc1.21.11.jar
-sodium-fabric-0.8.14-beta.2+mc1.21.11.jar 24990c1c497bdda4605c595f4ee65aaf32f724b1498a33c63f43cb4500280c51 https://cdn.modrinth.com/data/AANobbMI/versions/vqUoGREs/sodium-fabric-0.8.14-beta.2%2Bmc1.21.11.jar
-sound-physics-remastered-fabric-1.21.11-1.5.1.jar 17a4c14f58b739d275089262fc2015ff1548425202e6e4d7ce8cecf3122cdbca https://cdn.modrinth.com/data/qyVF9oeo/versions/pfqxi9qs/sound-physics-remastered-fabric-1.21.11-1.5.1.jar
-StorageDrawers-fabric-1.21.11-20.0.0.jar 5910484b2ad3813094600a229ef95bc6947cfe3815869b6fa418b139a037fdf9 https://cdn.modrinth.com/data/guitPqEi/versions/Q9r8LMQL/StorageDrawers-fabric-1.21.11-20.0.0.jar
-TerraBlender-fabric-1.21.11-21.11.0.0.jar 3f0567c194d579677b42dd57eeb912e4e558ca069f4fc525213d182e60113772 https://cdn.modrinth.com/data/kkmrDlKT/versions/chxo508B/TerraBlender-fabric-1.21.11-21.11.0.0.jar
-travelersbackpack-fabric-1.21.11-10.11.10.jar d9f42b1bafd29d84fd97b5b6e51c948f0ed7d1251c0deed40e512870ea5980fb https://cdn.modrinth.com/data/rlloIFEV/versions/LfmQsEdR/travelersbackpack-fabric-1.21.11-10.11.10.jar
-voxelmap-fabric-1.21.11-1.15.13.jar 1fe8ed68c671a6c4a80e064a8178102d674df0bec7aebb06bb857aafadf2d0a7 https://cdn.modrinth.com/data/wkzK5379/versions/tRdGJKGE/voxelmap-fabric-1.21.11-1.15.13.jar
-waystones-fabric-1.21.11-21.11.9.jar 6ce002c05655969f528dc1a1eb335a567caa6eaaf95715a86770a066b693f470 https://cdn.modrinth.com/data/LOpKHB2A/versions/MydMW2TT/waystones-fabric-1.21.11-21.11.9.jar
-BiomesOPlenty-fabric-1.21.11-21.11.0.32.jar 89d39707bc095516ba1bf4f162628dfba51dd58a3bcac14c74a14ffefc18f00a https://cdn.modrinth.com/data/HXF82T3G/versions/JJKbM72H/BiomesOPlenty-fabric-1.21.11-21.11.0.32.jar
-mdm-26.7.0-fabric-1.21.11.jar dded3b56d982410de040d7e0c3f3e068876f126bc4077c9a426d90f1695abe0b https://cdn.modrinth.com/data/TmUXSYKk/versions/q1Kv9EdP/mdm-26.7.0-fabric-1.21.11.jar
-balm-fabric-1.21.11-21.11.9.1.jar e957283fcf3d1a3bc1a832db74fa80b03b770eb61d2875de644e66da84bb0390 https://cdn.modrinth.com/data/MBAkmtvl/versions/5POKgjJn/balm-fabric-1.21.11-21.11.9.1.jar
-GlitchCore-fabric-1.21.11-21.11.0.4.jar 8c5b3912d167640f1911982781578ccfb3fbb11e73fcee319c7ff44045a6e8ef https://cdn.modrinth.com/data/s3dmwKy5/versions/CO7NeLTt/GlitchCore-fabric-1.21.11-21.11.0.4.jar
-architectury-19.0.1-fabric.jar 661395d6f0bef0d3a794e2db74df5600c7387ba6fb946b172315977201a667c7 https://cdn.modrinth.com/data/lhGA9TYQ/versions/uNdfrcQ8/architectury-19.0.1-fabric.jar
-'
-
-# --- known mod-name prefixes, used for duplicate-mod detection ---
-KNOWN_MOD_PREFIXES="sodium-fabric- iris-fabric- fabric-api- lithium-fabric- ferritecore- Adorn- carryon-fabric- fabric-language-kotlin- FantasticWings- FarmersDelight- ForgeConfigAPIPort- InventoryProfilesNext-fabric- Jade- jei- libIPN-fabric- modflared- PuzzlesLib- StorageDrawers-fabric- TerraBlender-fabric- travelersbackpack-fabric- create-fly- cc-tweaked- expanded_weaponry- animal_feeding_trough- connectiblechains- voxelmap-fabric- entity_texture_features- ImmediatelyFast-Fabric- sound-physics-remastered-fabric- skinlayers3d-fabric- lambdynamiclights- AmbientSounds_FABRIC_ CreativeCore_FABRIC_ PresenceFootsteps- cullleaves-fabric- continuity- cloth-config- midnightlib-fabric- waystones-fabric- BiomesOPlenty-fabric- mdm- balm-fabric- GlitchCore-fabric- architectury-"
+# --- manifest resolution ---
+# mods.generated.tsv (the mod/resourcepack/shaderpack table) and purge.generated.txt
+# (server-only filename prefixes) are the single source of truth, generated from
+# mods.json by scripts/generate. This installer is normally piped straight to sh with
+# no checkout, so it resolves each file at runtime (see resolve_asset below): a
+# --manifest override first, else a copy sitting next to the script, else a fetch from
+# the raw GitHub URL. The mods table, shader stack, resourcepack, server-only prefixes,
+# and duplicate-detection prefixes are all derived from these files, not hardcoded here.
+RAW_BASE_URL="https://raw.githubusercontent.com/Adarsh077/minecraft/main/client"
 
 TARGET_DIR=""
 TMPDIR_CREATED=""
 TIER=""
-# TIER_SHADERS is derived from the tier below: shaders (Iris + Sodium 0.8.7 swap +
-# Complementary) are installed for pandit/modi and NOT for dalit. There is no
-# user-facing shader flag.
-TIER_SHADERS=""
+MANIFEST_ARG=""
+# HAS_SHADERS is derived from the manifest below: a tier "has shaders" iff some active
+# manifest row installs into shaderpacks/. There is no user-facing shader flag.
+HAS_SHADERS=0
 
 log() { printf '%s\n' "$*"; }
 warn() { printf 'WARNING: %s\n' "$*" >&2; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
-  printf 'Usage: sh install.sh (--dalit | --pandit | --modi) [--dir DIR]\n' >&2
+  printf 'Usage: sh install.sh (--dalit | --pandit | --modi) [--dir DIR] [--manifest PATH-OR-URL]\n' >&2
   printf '  A tier is REQUIRED:\n' >&2
   printf '    --dalit   very low end: no shaders, minimal settings, -Xmx3G\n' >&2
   printf '    --pandit  medium: Complementary shaders (MEDIUM), -Xmx5G\n' >&2
   printf '    --modi    dedicated GPU: Complementary shaders (HIGH), -Xmx8G\n' >&2
+  printf '    --manifest PATH-OR-URL  override the generated mods.generated.tsv source (testing/local)\n' >&2
 }
 
 cleanup() {
@@ -120,6 +55,11 @@ while [ $# -gt 0 ]; do
     --dir)
       [ $# -ge 2 ] || die "--dir requires a value"
       TARGET_DIR="$2"
+      shift 2
+      ;;
+    --manifest)
+      [ $# -ge 2 ] || die "--manifest requires a value"
+      MANIFEST_ARG="$2"
       shift 2
       ;;
     --dalit)
@@ -152,14 +92,14 @@ fi
 
 # --- per-tier settings ---
 # All tiers install ALL mods; tiers differ only in shader stack and written config.
-# T_SHADERS=1 means this tier gets Iris + the Sodium 0.8.7 swap + Complementary.
+# Whether a tier gets Iris + the Sodium 0.8.7 swap is derived from the manifest below
+# (HAS_SHADERS), not set here.
 case "$TIER" in
     dalit)
       T_RENDER_DISTANCE=5;  T_SIM_DISTANCE=5;  T_GRAPHICS=0; T_PARTICLES=2
       T_MIPMAP=0;           T_BIOME_BLEND=0;   T_MAXFPS=60
       T_ENTITY_SHADOWS=false; T_AO=false;      T_ENTITY_DIST_SCALE=0.5
       T_XMX="3G"
-      T_SHADERS=""
       T_COMP_PROFILE=""
       T_SOUND_PHYSICS=false
       T_LAMBDYN="fastest"
@@ -173,7 +113,6 @@ case "$TIER" in
       T_MIPMAP=2;           T_BIOME_BLEND=2;   T_MAXFPS=120
       T_ENTITY_SHADOWS=true; T_AO=true;        T_ENTITY_DIST_SCALE=1.0
       T_XMX="5G"
-      T_SHADERS="1"
       T_COMP_PROFILE="MEDIUM"
       T_SOUND_PHYSICS=true
       T_LAMBDYN="fancy"
@@ -187,7 +126,6 @@ case "$TIER" in
       T_MIPMAP=4;           T_BIOME_BLEND=5;   T_MAXFPS=240
       T_ENTITY_SHADOWS=true; T_AO=true;        T_ENTITY_DIST_SCALE=1.0
       T_XMX="8G"
-      T_SHADERS="1"
       T_COMP_PROFILE="HIGH"
       T_SOUND_PHYSICS=true
       T_LAMBDYN="fancy"
@@ -222,55 +160,9 @@ log "[0/8] Using game directory: $TARGET_DIR"
 MODS_DIR="$TARGET_DIR/mods"
 mkdir -p "$MODS_DIR"
 
-# --- shader stack is decided by the tier (no user-facing shader flag) ---
-TIER_SHADERS="$T_SHADERS"
-
-# Reconcile the Sodium/Iris stack with the tier BEFORE anything downloads or the
-# duplicate check runs, so switching tiers never leaves two Sodium jars or a stray
-# Iris behind. (shaderpacks/ is left untouched -- the zips are harmless.)
-if [ -z "$TIER_SHADERS" ]; then
-  # dalit: no shaders. Strip Iris and the Sodium 0.8.7 build left by a shader tier;
-  # base Sodium 0.8.14 is (re)downloaded in step [5].
-  for f in "$MODS_DIR"/iris-fabric-*.jar; do
-    [ -f "$f" ] || continue
-    log "Tier '$TIER': removing Iris (this tier has no shaders): $(basename "$f")"
-    rm -f "$f"
-  done
-  for f in "$MODS_DIR"/sodium-fabric-0.8.7*.jar; do
-    [ -f "$f" ] || continue
-    log "Tier '$TIER': removing shader Sodium build: $(basename "$f")"
-    rm -f "$f"
-  done
-else
-  # pandit/modi: Iris 1.10.7 pins Sodium 0.8.7, so remove the base 0.8.14 build left
-  # by dalit; Sodium 0.8.7 and Iris are (re)downloaded in step [5].
-  _old_sodium="$MODS_DIR/$SODIUM_BASE_JAR"
-  if [ -f "$_old_sodium" ]; then
-    log "Tier '$TIER': removing base Sodium ($SODIUM_BASE_JAR); Iris requires Sodium 0.8.7"
-    rm -f "$_old_sodium"
-  fi
-fi
-
-# --- effective download table + manifest for this run (depends on the tier's shader stack) ---
-# dalit keeps sodium 0.8.14 (in MODS_TABLE) and gets no Iris. pandit/modi drop
-# sodium 0.8.14 and add sodium 0.8.7 + Iris.
-if [ -n "$TIER_SHADERS" ]; then
-  EFFECTIVE_TABLE="$(printf '%s\n' "$MODS_TABLE" | grep -vF "$SODIUM_BASE_JAR ")
-$(printf '%s %s %s' "$SODIUM_SHADERS_JAR" "$SODIUM_SHADERS_SHA256" "$SODIUM_SHADERS_URL")
-$(printf '%s %s %s' "$IRIS_JAR" "$IRIS_SHA256" "$IRIS_URL")"
-  EXPECTED_JAR_COUNT=44
-  EXPECTED_SODIUM_JAR="$SODIUM_SHADERS_JAR"
-else
-  EFFECTIVE_TABLE="$MODS_TABLE"
-  EXPECTED_JAR_COUNT=43
-  EXPECTED_SODIUM_JAR="$SODIUM_BASE_JAR"
-fi
-
-# "filename sha256" pairs (drop the URL column) for the final verification gate.
-EFFECTIVE_MANIFEST="$(printf '%s\n' "$EFFECTIVE_TABLE" | while IFS=' ' read -r _ef _es _eu; do
-  [ -n "$_ef" ] || continue
-  printf '%s %s\n' "$_ef" "$_es"
-done)"
+# The manifest is resolved and parsed further down (after the temp dir and the fetch
+# helper exist); the tier reconciliation of mods/ happens there, still BEFORE anything
+# downloads or the duplicate check runs.
 
 # --- helper: hash tools ---
 sha256_of() {
@@ -536,6 +428,136 @@ config_action() {
 
 TMPDIR_CREATED="$(mktemp -d)"
 
+# --- resolve + parse the generated manifest (single source of truth) ---
+# Determine the script's own directory when it is resolvable. When the script is piped
+# to sh ("... | sh -s -- --dalit"), $0 is "sh" or "-" with no slash, so it must NOT be
+# treated as a path: only use it when it contains a slash AND the file beside it
+# actually exists. This must never blow up under set -eu.
+SCRIPT_DIR=""
+case "$0" in
+  */*)
+    _sd="$(dirname "$0")"
+    [ -d "$_sd" ] && SCRIPT_DIR="$_sd"
+    ;;
+esac
+
+# resolve_asset FILENAME OVERRIDE -> prints a local path to the resolved file.
+# OVERRIDE (may be empty; only the manifest passes one) is honoured first and can be a
+# local path or an http(s) URL. Else a copy next to the script is used when present.
+# Else it is fetched from RAW_BASE_URL into the temp dir.
+resolve_asset() {
+  _ra_name="$1"
+  _ra_override="$2"
+  if [ -n "$_ra_override" ]; then
+    case "$_ra_override" in
+      http://*|https://*)
+        _ra_dest="$TMPDIR_CREATED/$_ra_name"
+        fetch "$_ra_override" "$_ra_dest"
+        printf '%s' "$_ra_dest"
+        return 0
+        ;;
+      *)
+        [ -f "$_ra_override" ] || die "Manifest not found: $_ra_override"
+        printf '%s' "$_ra_override"
+        return 0
+        ;;
+    esac
+  fi
+  if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/$_ra_name" ]; then
+    printf '%s' "$SCRIPT_DIR/$_ra_name"
+    return 0
+  fi
+  _ra_dest="$TMPDIR_CREATED/$_ra_name"
+  fetch "$RAW_BASE_URL/$_ra_name" "$_ra_dest"
+  printf '%s' "$_ra_dest"
+}
+
+MANIFEST_FILE="$(resolve_asset "mods.generated.tsv" "$MANIFEST_ARG")"
+[ -f "$MANIFEST_FILE" ] || die "Could not obtain the mod manifest (mods.generated.tsv)."
+PURGE_FILE="$(resolve_asset "purge.generated.txt" "")"
+[ -f "$PURGE_FILE" ] || die "Could not obtain the server-only purge list (purge.generated.txt)."
+
+TAB="$(printf '\t')"
+
+# Parse the TSV (filename<TAB>sha256<TAB>url<TAB>dest<TAB>tiers<TAB>prefix), skipping
+# blank and #-comment lines. A row is ACTIVE for this tier when tiers is "*" or the
+# tier appears in the comma-separated list. Filenames may contain spaces, so every
+# split here is on TAB only. Derived outputs (temp files, all TAB-separated):
+#   active_rows.tsv    filename<TAB>sha<TAB>url<TAB>dest<TAB>prefix  (active only)
+#   inactive_mods.tsv  filename<TAB>prefix                          (inactive, dest=mods)
+#   all_mods.tsv       filename<TAB>prefix                          (dest=mods, ALL tiers)
+# plus scalar files jarcount.txt (active dest=mods count) and has_shaders.txt (0/1).
+ACTIVE_ROWS="$TMPDIR_CREATED/active_rows.tsv"
+INACTIVE_MODS="$TMPDIR_CREATED/inactive_mods.tsv"
+ALL_MODS="$TMPDIR_CREATED/all_mods.tsv"
+awk -F"$TAB" -v tier="$TIER" \
+    -v active_out="$ACTIVE_ROWS" -v inactive_out="$INACTIVE_MODS" \
+    -v allmods_out="$ALL_MODS" -v jar_out="$TMPDIR_CREATED/jarcount.txt" \
+    -v shaders_out="$TMPDIR_CREATED/has_shaders.txt" '
+  BEGIN { jarcount = 0; has_shaders = 0 }
+  /^[ \t]*#/ { next }
+  NF < 6 { next }
+  {
+    filename = $1; sha = $2; url = $3; dest = $4; tiers = $5; prefix = $6
+    active = (tiers == "*")
+    if (!active) {
+      n = split(tiers, a, ",")
+      for (i = 1; i <= n; i++) if (a[i] == tier) active = 1
+    }
+    if (dest == "mods") print filename "\t" prefix > allmods_out
+    if (active) {
+      print filename "\t" sha "\t" url "\t" dest "\t" prefix > active_out
+      if (dest == "mods") jarcount++
+      if (dest == "shaderpacks") has_shaders = 1
+    } else if (dest == "mods") {
+      print filename "\t" prefix > inactive_out
+    }
+  }
+  END {
+    print jarcount > jar_out
+    print has_shaders > shaders_out
+  }
+' "$MANIFEST_FILE"
+
+[ -f "$ACTIVE_ROWS" ] || die "Manifest produced no active rows for tier '$TIER' (source: $MANIFEST_FILE)."
+EXPECTED_JAR_COUNT="$(cat "$TMPDIR_CREATED/jarcount.txt" 2>/dev/null || printf '0')"
+HAS_SHADERS="$(cat "$TMPDIR_CREATED/has_shaders.txt" 2>/dev/null || printf '0')"
+[ "$EXPECTED_JAR_COUNT" -gt 0 ] 2>/dev/null || die "Manifest produced zero active mod jars for tier '$TIER' (source: $MANIFEST_FILE)."
+[ -f "$INACTIVE_MODS" ] || : > "$INACTIVE_MODS"
+[ -f "$ALL_MODS" ] || : > "$ALL_MODS"
+
+# Derived filenames from the active non-mods rows.
+SHADERPACK_ZIP="$(awk -F"$TAB" '$4=="shaderpacks"{print $1; exit}' "$ACTIVE_ROWS")"
+ACTIVE_RESOURCEPACKS="$TMPDIR_CREATED/active_resourcepacks.txt"
+awk -F"$TAB" '$4=="resourcepacks"{print $1}' "$ACTIVE_ROWS" > "$ACTIVE_RESOURCEPACKS"
+
+# --- reconcile the mods/ directory with this tier BEFORE anything downloads or the
+# duplicate check runs, so switching tiers never leaves an inactive or stale jar
+# behind. "side" in mods.json decides server-only removal (step [4/8]); the per-mod
+# tier list decides this. (shaderpacks/ is left untouched -- the zips are harmless.)
+# 1. Every INACTIVE dest=mods row whose exact file is present is removed.
+while IFS="$TAB" read -r _rf _rp; do
+  [ -n "$_rf" ] || continue
+  if [ -f "$MODS_DIR/$_rf" ]; then
+    log "Tier '$TIER': removing inactive mod: $_rf"
+    rm -f "$MODS_DIR/$_rf"
+  fi
+done < "$INACTIVE_MODS"
+# 2. Any prefix owned by an INACTIVE row but NOT by any ACTIVE row (e.g. iris-fabric-
+# when this tier has no shaders) has every matching jar removed -- this also clears an
+# Iris/Sodium left behind at a DIFFERENT version than the one currently pinned.
+ACTIVE_PREFIXES="$(awk -F"$TAB" '$4=="mods"{print $5}' "$ACTIVE_ROWS" | sort -u)"
+awk -F"$TAB" '{print $2}' "$INACTIVE_MODS" | sort -u | while IFS= read -r _ip; do
+  [ -n "$_ip" ] || continue
+  if ! printf '%s\n' "$ACTIVE_PREFIXES" | grep -qxF "$_ip"; then
+    for f in "$MODS_DIR/$_ip"*.jar; do
+      [ -f "$f" ] || continue
+      log "Tier '$TIER': removing stale mod for prefix '$_ip': $(basename "$f")"
+      rm -f "$f"
+    done
+  fi
+done
+
 # --- A/B: vanilla base version ---
 VERSION_DIR="$TARGET_DIR/versions/${FABRIC_MC_VERSION}"
 VERSION_JSON="$VERSION_DIR/${FABRIC_MC_VERSION}.json"
@@ -738,37 +760,41 @@ else
 fi
 
 # --- E: remove server-only jars ---
+# The prefixes come from purge.generated.txt: mods.json's "side" == server field is
+# what decides a mod is server-only, so a friend's client mods/ never keeps them.
 log "[4/8] Removing server-only jars from mods/ (if present)..."
-for prefix in $SERVER_ONLY_PREFIXES; do
+while IFS= read -r prefix; do
+  case "$prefix" in ''|'#'*) continue ;; esac
   for f in "$MODS_DIR"/"$prefix"*; do
     if [ -f "$f" ]; then
       log "Removing server-only jar: $(basename "$f")"
       rm -f "$f"
     fi
   done
-done
+done < "$PURGE_FILE"
 
 # --- F: download + verify every file for this tier from the Modrinth CDN ---
 log "[5/8] Downloading and verifying mods, resourcepack, and shaders (this transfers ~145 MB on a fresh install)..."
 RESOURCEPACKS_DIR="$TARGET_DIR/resourcepacks"
-RESOURCEPACK_DEST="$RESOURCEPACKS_DIR/$RESOURCEPACK_NAME"
 SHADERPACKS_DIR="$TARGET_DIR/shaderpacks"
 
-# 5a: every mod jar for this tier -> mods/. Read from a temp file (not a pipe) so
-# a download_verify failure aborts the whole script instead of just a subshell.
-printf '%s\n' "$EFFECTIVE_TABLE" > "$TMPDIR_CREATED/effective_table.txt"
-while IFS=' ' read -r dfname dsha durl; do
-  [ -n "$dfname" ] || continue
+# 5a: every active mod jar -> mods/. The active rows are already staged in a temp file
+# (not a pipe), so a download_verify failure aborts the whole script, not a subshell.
+while IFS="$TAB" read -r dfname dsha durl ddest dprefix; do
+  [ "$ddest" = "mods" ] || continue
   download_verify "$dfname" "$dsha" "$durl" "$MODS_DIR"
-done < "$TMPDIR_CREATED/effective_table.txt"
+done < "$ACTIVE_ROWS"
 
-# 5b: the resourcepack -> resourcepacks/ (filename has a space; download_verify quotes it)
-download_verify "$RESOURCEPACK_NAME" "$RESOURCEPACK_SHA256" "$RESOURCEPACK_URL" "$RESOURCEPACKS_DIR"
+# 5b: every active non-mod file -> its dest dir (resourcepacks/ or shaderpacks/).
+# Filenames may contain spaces; download_verify quotes them.
+while IFS="$TAB" read -r dfname dsha durl ddest dprefix; do
+  case "$ddest" in
+    resourcepacks) download_verify "$dfname" "$dsha" "$durl" "$RESOURCEPACKS_DIR" ;;
+    shaderpacks)   download_verify "$dfname" "$dsha" "$durl" "$SHADERPACKS_DIR" ;;
+  esac
+done < "$ACTIVE_ROWS"
 
-# 5c: shader stack -- Complementary shaderpack -> shaderpacks/ (pandit/modi only;
-# Iris and Sodium 0.8.7 are part of EFFECTIVE_TABLE above and land in mods/).
-if [ -n "$TIER_SHADERS" ]; then
-  download_verify "$SHADERPACK_ZIP" "$SHADERPACK_SHA256" "$SHADERPACK_URL" "$SHADERPACKS_DIR"
+if [ "$HAS_SHADERS" = "1" ]; then
   log "Shaders installed for '$TIER': Iris, Sodium 0.8.7, Complementary Unbound (shaderpacks/$SHADERPACK_ZIP)."
 fi
 
@@ -802,10 +828,14 @@ ao $T_AO
 entityDistanceScaling $T_ENTITY_DIST_SCALE" | merge_kv_file "$OPTIONS_TXT" ":"
   log "options.txt ($TIER, $_opt_action): renderDistance=$T_RENDER_DISTANCE simulationDistance=$T_SIM_DISTANCE graphicsMode=$T_GRAPHICS particles=$T_PARTICLES mipmapLevels=$T_MIPMAP biomeBlendRadius=$T_BIOME_BLEND maxFps=$T_MAXFPS entityShadows=$T_ENTITY_SHADOWS ao=$T_AO entityDistanceScaling=$T_ENTITY_DIST_SCALE"
 
-  # Enable the Presence Footsteps resourcepack (all tiers) -- copying it does not
+  # Enable each active resourcepack (normally exactly one) -- copying it does not
   # switch it on. Merged into resourcePacks so a friend's enabled packs are kept.
-  enable_resourcepack "$OPTIONS_TXT" "file/$RESOURCEPACK_NAME"
-  log "options.txt ($TIER): resourcePacks += \"file/$RESOURCEPACK_NAME\""
+  # If the tier has no resourcepack row, this simply enables nothing.
+  while IFS= read -r _rpname; do
+    [ -n "$_rpname" ] || continue
+    enable_resourcepack "$OPTIONS_TXT" "file/$_rpname"
+    log "options.txt ($TIER): resourcePacks += \"file/$_rpname\""
+  done < "$ACTIVE_RESOURCEPACKS"
 
   # Sodium -- config/sodium-options.json. GSON field naming is
   # LOWER_CASE_WITH_UNDERSCORES, so the JSON keys are snake_case (NOT the Java
@@ -867,7 +897,7 @@ entityDistanceScaling $T_ENTITY_DIST_SCALE" | merge_kv_file "$OPTIONS_TXT" ":"
   # Confirmed against the Iris jar: Iris.class resolves
   # getShaderpacksDirectory().resolve(name + ".txt") and reads "profile" via
   # queueShaderPackOptionsFromProperties.
-  if [ -n "$TIER_SHADERS" ]; then
+  if [ "$HAS_SHADERS" = "1" ]; then
     IRIS_PROPERTIES="$TARGET_DIR/config/iris.properties"
     _iris_action="$(config_action "$IRIS_PROPERTIES")"
     printf '%s\n' "shaderPack $SHADERPACK_ZIP
@@ -882,17 +912,28 @@ enableShaders true" | merge_kv_file "$IRIS_PROPERTIES" "="
 fi
 
 # --- H: verify all mod jars ---
-# dalit: 37 jars, Sodium 0.8.14-beta.2.
-# pandit/modi: 38 jars in mods/ (Sodium swapped to 0.8.7, plus Iris); the shaderpack
-# zip lives in shaderpacks/ and was verified on download above. The resourcepack
-# lives in resourcepacks/ and is verified separately below.
+# dalit: 43 active jars; pandit/modi: 44 active jars (Sodium swapped to 0.8.7, plus
+# Iris). The active jar count is derived from the manifest for this tier. Non-mod files
+# (the resourcepack, and the shaderpack for shader tiers) live in resourcepacks/ and
+# shaderpacks/ and are verified separately in H.4 below.
 log "[8/8] Verifying all ${EXPECTED_JAR_COUNT} mod jars by SHA-256..."
 
-# --- H.1: hard-fail on duplicate mods (two files for the same mod). This
-# must run BEFORE the exactly-one-Sodium cleanup below, so a duplicate that
-# was NOT produced by our own controlled mode-switch logic (e.g. a stray copy
-# a user dropped in manually) is reported and aborted rather than silently
-# deleted out from under them. ---
+# Precompute the sets used by the gate:
+#   ALL_MOD_PREFIXES  every distinct prefix from ALL manifest rows (any tier), dest=mods
+#   ACTIVE_MODS_FILES active dest=mods filenames (this tier)
+#   ALL_MODS_FILES    every dest=mods filename (any tier)
+ALL_MOD_PREFIXES="$(awk -F"$TAB" '{print $2}' "$ALL_MODS" | sort -u)"
+ACTIVE_MODS_FILES="$TMPDIR_CREATED/active_mods_files.txt"
+awk -F"$TAB" '$4=="mods"{print $1}' "$ACTIVE_ROWS" > "$ACTIVE_MODS_FILES"
+ALL_MODS_FILES="$TMPDIR_CREATED/all_mods_files.txt"
+awk -F"$TAB" '{print $1}' "$ALL_MODS" > "$ALL_MODS_FILES"
+
+# --- H.1: hard-fail on duplicate mods (two files for the same mod). The known-prefix
+# set is every distinct prefix from ALL manifest rows (all tiers), so a mod that is
+# inactive for this tier is still recognised. This must run BEFORE the tier-swap
+# artifact cleanup below, so a duplicate that was NOT produced by our own controlled
+# logic (e.g. a stray copy a user dropped in manually) is reported and aborted rather
+# than silently deleted out from under them. ---
 DUP_TMP="$TMPDIR_CREATED/modkeys.txt"
 : > "$DUP_TMP"
 for f in "$MODS_DIR"/*.jar; do
@@ -902,7 +943,7 @@ for f in "$MODS_DIR"/*.jar; do
     tl_skin_cape*.jar) continue ;;
   esac
   matched=""
-  for prefix in $KNOWN_MOD_PREFIXES; do
+  for prefix in $ALL_MOD_PREFIXES; do
     case "$bn" in
       "$prefix"*) matched="$prefix" ;;
     esac
@@ -911,19 +952,18 @@ for f in "$MODS_DIR"/*.jar; do
   if [ -n "$matched" ]; then
     printf '%s %s\n' "$matched" "$bn" >> "$DUP_TMP"
   else
-    in_manifest="$(printf '%s\n' "$EFFECTIVE_MANIFEST" | awk -v f="$bn" '$1==f{print "1"; exit}')"
-    if [ -z "$in_manifest" ]; then
+    if ! grep -qxF "$bn" "$ACTIVE_MODS_FILES"; then
       warn "Unrecognized extra jar in mods/: $bn (not part of the expected pack; leaving in place)"
     fi
   fi
 done
 
-for prefix in $KNOWN_MOD_PREFIXES; do
+for prefix in $ALL_MOD_PREFIXES; do
   files="$(awk -v p="$prefix" '$1==p{print $2}' "$DUP_TMP")"
   count=0
   [ -n "$files" ] && count="$(printf '%s\n' "$files" | grep -c .)"
   if [ "$count" -gt 1 ]; then
-    expected_name="$(printf '%s\n' "$EFFECTIVE_MANIFEST" | awk -v p="$prefix" -F' ' 'index($1,p)==1{print $1; exit}')"
+    expected_name="$(awk -v p="$prefix" 'index($0,p)==1{print; exit}' "$ACTIVE_MODS_FILES")"
     printf 'ERROR: Duplicate mod detected for prefix "%s" -- two versions of one mod will crash the game:\n' "$prefix" >&2
     printf '%s\n' "$files" | while IFS= read -r fn; do
       [ -n "$fn" ] || continue
@@ -938,40 +978,39 @@ for prefix in $KNOWN_MOD_PREFIXES; do
   fi
 done
 
-# --- H.2: guarantee exactly one Sodium jar before the manifest check. The
-# expected build is tier-decided (dalit -> 0.8.14-beta.2, pandit/modi -> 0.8.7).
-# This is the only automatic removal in the gate; it only ever runs on the state
-# our own tier logic leaves behind, since H.1 above already aborted on any
-# duplicate a user introduced by hand. ---
-for f in "$MODS_DIR"/sodium-fabric-*.jar; do
+# --- H.2: remove our own tier-swap artifacts before the manifest check. A jar whose
+# filename is named by the FULL manifest (any tier) but is NOT active for this tier
+# (e.g. the base Sodium build left by a dalit->pandit switch) is our own artifact and
+# is safe to delete. This must not touch any file the manifest does not name; H.1 above
+# already aborted on any duplicate a user introduced by hand. ---
+for f in "$MODS_DIR"/*.jar; do
   [ -f "$f" ] || continue
   bn="$(basename "$f")"
-  if [ "$bn" != "$EXPECTED_SODIUM_JAR" ]; then
-    log "Removing unexpected Sodium jar: $bn (keeping $EXPECTED_SODIUM_JAR)"
+  if grep -qxF "$bn" "$ALL_MODS_FILES" && ! grep -qxF "$bn" "$ACTIVE_MODS_FILES"; then
+    log "Removing tier-swap artifact jar: $bn (named by the manifest but not active for '$TIER')"
     rm -f "$f"
   fi
 done
 
-# --- H.3: every expected filename exists with the right hash ---
+# --- H.3: every active mod jar exists at mods/<filename> with the right hash ---
 MISSING=""
 MISMATCHED=""
 VERIFIED_COUNT=0
 
-printf '%s\n' "$EFFECTIVE_MANIFEST" > "$TMPDIR_CREATED/manifest.txt"
-while IFS=' ' read -r fname expected; do
-  [ -n "$fname" ] || continue
+while IFS="$TAB" read -r fname fsha furl fdest fprefix; do
+  [ "$fdest" = "mods" ] || continue
   target="$MODS_DIR/$fname"
   if [ ! -f "$target" ]; then
     MISSING="$MISSING $fname"
     continue
   fi
   actual="$(sha256_of "$target")"
-  if [ "$actual" != "$expected" ]; then
-    MISMATCHED="$MISMATCHED $fname(expected=$expected,got=$actual)"
+  if [ "$actual" != "$fsha" ]; then
+    MISMATCHED="$MISMATCHED $fname(expected=$fsha,got=$actual)"
     continue
   fi
   VERIFIED_COUNT=$((VERIFIED_COUNT + 1))
-done < "$TMPDIR_CREATED/manifest.txt"
+done < "$ACTIVE_ROWS"
 
 if [ -n "$MISSING" ] || [ -n "$MISMATCHED" ]; then
   [ -z "$MISSING" ] || printf 'ERROR: Missing mod jars in %s:%s\n' "$MODS_DIR" "$MISSING" >&2
@@ -979,23 +1018,40 @@ if [ -n "$MISSING" ] || [ -n "$MISMATCHED" ]; then
   die "Mod jar verification failed. See errors above."
 fi
 
-# --- H.4: verify the resourcepack (same SHA-256 gate as the jars) ---
-if [ ! -f "$RESOURCEPACK_DEST" ]; then
-  die "Missing resourcepack in $RESOURCEPACKS_DIR: $RESOURCEPACK_NAME"
-fi
-RP_ACTUAL_SHA256="$(sha256_of "$RESOURCEPACK_DEST")"
-if [ "$RP_ACTUAL_SHA256" != "$RESOURCEPACK_SHA256" ]; then
-  die "SHA-256 mismatch for resourcepack '$RESOURCEPACK_NAME': expected $RESOURCEPACK_SHA256, got $RP_ACTUAL_SHA256"
+# --- H.4: every active non-mod file (resourcepack, and shaderpack for shader tiers)
+# exists at <gamedir>/<dest>/<filename> with the right hash (same SHA-256 gate). ---
+NONMODS_MISSING=""
+NONMODS_MISMATCHED=""
+NONMODS_VERIFIED=0
+while IFS="$TAB" read -r fname fsha furl fdest fprefix; do
+  case "$fdest" in mods) continue ;; esac
+  ntarget="$TARGET_DIR/$fdest/$fname"
+  if [ ! -f "$ntarget" ]; then
+    NONMODS_MISSING="$NONMODS_MISSING $fdest/$fname"
+    continue
+  fi
+  nactual="$(sha256_of "$ntarget")"
+  if [ "$nactual" != "$fsha" ]; then
+    NONMODS_MISMATCHED="$NONMODS_MISMATCHED $fdest/$fname(expected=$fsha,got=$nactual)"
+    continue
+  fi
+  NONMODS_VERIFIED=$((NONMODS_VERIFIED + 1))
+done < "$ACTIVE_ROWS"
+
+if [ -n "$NONMODS_MISSING" ] || [ -n "$NONMODS_MISMATCHED" ]; then
+  [ -z "$NONMODS_MISSING" ] || printf 'ERROR: Missing files in %s:%s\n' "$TARGET_DIR" "$NONMODS_MISSING" >&2
+  [ -z "$NONMODS_MISMATCHED" ] || printf 'ERROR: Mismatched files in %s:%s\n' "$TARGET_DIR" "$NONMODS_MISMATCHED" >&2
+  die "Resourcepack/shaderpack verification failed. See errors above."
 fi
 
-log "All ${EXPECTED_JAR_COUNT} mod jars + the resourcepack verified."
+log "All ${EXPECTED_JAR_COUNT} mod jars + ${NONMODS_VERIFIED} other file(s) verified."
 
 # --- I: final summary ---
 log "Install complete."
 log "Game directory: $TARGET_DIR"
 log "Select this version in your launcher: $PROFILE_ID"
-log "Verified jar count: $VERIFIED_COUNT / $EXPECTED_JAR_COUNT (+ 1 resourcepack)"
-if [ -n "$TIER_SHADERS" ]; then
+log "Verified jar count: $VERIFIED_COUNT / $EXPECTED_JAR_COUNT (+ $NONMODS_VERIFIED other file(s))"
+if [ "$HAS_SHADERS" = "1" ]; then
   log "Tier applied: $TIER (RAM -Xmx${T_XMX}; shaders ON: Iris + Sodium 0.8.7 + Complementary $T_COMP_PROFILE)."
 else
   log "Tier applied: $TIER (RAM -Xmx${T_XMX}; no shaders, Sodium 0.8.14-beta.2)."

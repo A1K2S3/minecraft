@@ -1,0 +1,520 @@
+#!/usr/bin/env python3
+"""Generate the committed modpack manifests from mods.json.
+
+mods.json (repo root) is the SINGLE SOURCE OF TRUTH for the mod list. This
+script reads it, resolves what it needs from the Modrinth API once, and writes
+three generated, committed files:
+
+  server/mods.generated.env    MODRINTH_PROJECTS for the itzg server container
+  client/mods.generated.tsv    one row per downloadable client file
+  client/purge.generated.txt   filename prefixes of server-only mods to purge
+
+Usage (run from the repo root):
+
+    ./scripts/generate            regenerate all three files and print a summary
+    ./scripts/generate --check    exit 1 with a unified diff if any file is stale
+
+Only the Python 3 standard library is used. Nothing else in the repo hardcodes
+a mod list -- edit mods.json and re-run this script.
+"""
+
+import hashlib
+import json
+import re
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+API_BASE = "https://api.modrinth.com/v2"
+USER_AGENT = "Adarsh077/minecraft (scripts/generate)"
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+MODS_JSON = REPO_ROOT / "mods.json"
+SERVER_ENV = REPO_ROOT / "server" / "mods.generated.env"
+CLIENT_TSV = REPO_ROOT / "client" / "mods.generated.tsv"
+CLIENT_PURGE = REPO_ROOT / "client" / "purge.generated.txt"
+
+VALID_SIDES = {"server", "client", "both"}
+VALID_TYPES = {"mod", "datapack", "resourcepack", "shaderpack"}
+DEST_BY_TYPE = {"mod": "mods", "resourcepack": "resourcepacks", "shaderpack": "shaderpacks"}
+
+
+class GenerateError(Exception):
+    """A fatal, user-facing error. Printed without a traceback."""
+
+
+# --------------------------------------------------------------------------- #
+# Modrinth API                                                                 #
+# --------------------------------------------------------------------------- #
+
+def api_get(path, params=None):
+    """GET <API_BASE><path>?<params> and return the parsed JSON."""
+    url = API_BASE + path
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    last_err = None
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if exc.code in (429, 500, 502, 503, 504) and attempt < 3:
+                time.sleep(2 * (attempt + 1))
+                last_err = exc
+                continue
+            raise GenerateError(f"Modrinth GET {url} failed: HTTP {exc.code} {exc.reason}")
+        except urllib.error.URLError as exc:
+            if attempt < 3:
+                time.sleep(2 * (attempt + 1))
+                last_err = exc
+                continue
+            raise GenerateError(f"Modrinth GET {url} failed: {exc}")
+    raise GenerateError(f"Modrinth GET {url} failed after retries: {last_err}")
+
+
+def allowed_version_types(default_type):
+    if default_type == "release":
+        return {"release"}
+    if default_type == "beta":
+        return {"release", "beta", "alpha"}
+    raise GenerateError(
+        f"server_default_version_type must be 'release' or 'beta', got {default_type!r}"
+    )
+
+
+def batch_versions(version_ids):
+    """One call: GET /versions?ids=[...]. Returns {version_id: version}."""
+    if not version_ids:
+        return {}
+    ids = sorted(set(version_ids))
+    data = api_get("/versions", {"ids": json.dumps(ids)})
+    return {v["id"]: v for v in data}
+
+
+def batch_projects(slugs):
+    """One call: GET /projects?ids=[...]. Returns {slug: project_id}."""
+    if not slugs:
+        return {}
+    ids = sorted(set(slugs))
+    data = api_get("/projects", {"ids": json.dumps(ids)})
+    return {p["slug"]: p["id"] for p in data}
+
+
+def resolve_latest(slug, allowed_types, mc_version="1.21.11", loader="fabric"):
+    """Newest version for this MC version whose version_type is allowed.
+
+    Tries the loader filter first; retries once without it (datapacks and
+    resource packs are not fabric-loader tagged). Returns a version dict or None.
+    """
+    for use_loader in (True, False):
+        params = {"game_versions": json.dumps([mc_version])}
+        if use_loader:
+            params["loaders"] = json.dumps([loader])
+        versions = api_get(f"/project/{slug}/version", params)
+        for version in versions:  # API returns newest first
+            if version.get("version_type") in allowed_types:
+                return version
+    return None
+
+
+def resolve_pinned(slug, pin):
+    """Find the version of <slug> whose id or version_number equals <pin>."""
+    versions = api_get(f"/project/{slug}/version")
+    for version in versions:
+        if version.get("id") == pin or version.get("version_number") == pin:
+            return version
+    raise GenerateError(
+        f"pinned version {pin!r} for slug {slug!r} was not found on Modrinth"
+    )
+
+
+def primary_file(version, slug):
+    files = version.get("files") or []
+    if not files:
+        raise GenerateError(f"version {version.get('id')} for slug {slug!r} has no files")
+    for f in files:
+        if f.get("primary") is True:
+            return f
+    return files[0]
+
+
+def download_sha256(url, expected_sha512, slug):
+    """Download the file bytes, verify Modrinth's sha512, return the sha256 hex.
+
+    Modrinth's `hashes` object exposes only sha512 and sha1 -- never sha256 --
+    but the client installer verifies each jar by sha256. So the sha256 is
+    computed from the bytes the sha512 lookup resolves, exactly as the installer
+    comment describes ("resolved by SHA-512 ... so each serves the bytes its
+    SHA-256 names").
+    """
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    last_err = None
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = resp.read()
+            break
+        except urllib.error.URLError as exc:
+            if attempt < 3:
+                time.sleep(2 * (attempt + 1))
+                last_err = exc
+                continue
+            raise GenerateError(f"download {url} failed: {exc}")
+    else:  # pragma: no cover
+        raise GenerateError(f"download {url} failed after retries: {last_err}")
+
+    if expected_sha512:
+        got512 = hashlib.sha512(data).hexdigest()
+        if got512 != expected_sha512:
+            raise GenerateError(
+                f"sha512 mismatch for slug {slug!r} at {url}: "
+                f"expected {expected_sha512}, got {got512}"
+            )
+    return hashlib.sha256(data).hexdigest()
+
+
+# --------------------------------------------------------------------------- #
+# Filename prefix derivation                                                   #
+# --------------------------------------------------------------------------- #
+
+def is_version_token(token):
+    """A token 'looks like a version' if it starts with a digit, or 'v'<digit>."""
+    if not token:
+        return False
+    if token[0].isdigit():
+        return True
+    return len(token) >= 2 and token[0] == "v" and token[1].isdigit()
+
+
+def filename_prefix(filename):
+    """Duplicate-detection prefix: everything up to and including the separator
+    that precedes the first version-looking token, with .jar removed."""
+    base = filename[:-4] if filename.endswith(".jar") else filename
+    parts = re.split(r"([-_])", base)  # [tok, sep, tok, sep, ...], tokens at even idx
+    for j in range(0, len(parts), 2):
+        if is_version_token(parts[j]):
+            return "".join(parts[:j])
+    raise GenerateError(
+        f"no version token found in filename {filename!r}; cannot derive a prefix"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Load + validate mods.json                                                    #
+# --------------------------------------------------------------------------- #
+
+def load_mods():
+    try:
+        doc = json.loads(MODS_JSON.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise GenerateError(f"{MODS_JSON} not found")
+    except json.JSONDecodeError as exc:
+        raise GenerateError(f"{MODS_JSON} is not valid JSON: {exc}")
+    return doc
+
+
+def validate(doc):
+    tiers = doc.get("client_tiers")
+    if not isinstance(tiers, list) or not tiers:
+        raise GenerateError("top-level client_tiers must be a non-empty list")
+    tier_set = set(tiers)
+    mods = doc.get("mods")
+    if not isinstance(mods, list):
+        raise GenerateError("mods must be an array")
+
+    for i, e in enumerate(mods):
+        where = f"mods[{i}] ({e.get('name', '?')!r})"
+        for key in ("name", "slug", "side", "type"):
+            if key not in e or e[key] in (None, ""):
+                raise GenerateError(f"{where}: missing required key {key!r}")
+        if e["side"] not in VALID_SIDES:
+            raise GenerateError(f"{where}: side {e['side']!r} not in {sorted(VALID_SIDES)}")
+        if e["type"] not in VALID_TYPES:
+            raise GenerateError(f"{where}: type {e['type']!r} not in {sorted(VALID_TYPES)}")
+
+        is_client = e["side"] in ("client", "both")
+        if is_client:
+            for key in ("client_version", "client_tiers"):
+                if key not in e:
+                    raise GenerateError(f"{where}: client|both entry must have key {key!r}")
+            ct = e["client_tiers"]
+            if ct is not None:
+                if not isinstance(ct, list):
+                    raise GenerateError(f"{where}: client_tiers must be null or a list")
+                for t in ct:
+                    if t not in tier_set:
+                        raise GenerateError(
+                            f"{where}: client_tiers value {t!r} not in top-level client_tiers"
+                        )
+        else:  # side == server
+            for key in ("client_version", "client_tiers"):
+                if key in e:
+                    raise GenerateError(f"{where}: server entry must NOT have key {key!r}")
+
+    # Check 4: duplicated slug only allowed when all entries are client-side and
+    # their tier sets are pairwise disjoint.
+    by_slug = {}
+    for e in mods:
+        by_slug.setdefault(e["slug"], []).append(e)
+    for slug, entries in by_slug.items():
+        if len(entries) == 1:
+            continue
+        if any(e["side"] not in ("client", "both") for e in entries):
+            raise GenerateError(
+                f"slug {slug!r} is duplicated but not every entry is client-side"
+            )
+        seen = []
+        for e in entries:
+            ct = e["client_tiers"]
+            tset = tier_set.copy() if ct is None else set(ct)
+            for other in seen:
+                if tset & other:
+                    raise GenerateError(
+                        f"slug {slug!r} is duplicated with overlapping tiers "
+                        f"{sorted(tset & other)}"
+                    )
+            seen.append(tset)
+
+    return tiers, tier_set
+
+
+# --------------------------------------------------------------------------- #
+# Output builders                                                              #
+# --------------------------------------------------------------------------- #
+
+GEN_HEADER = "# Generated by scripts/generate from mods.json. Do NOT hand-edit."
+
+
+def build_server_env(doc):
+    tokens = []
+    for e in doc["mods"]:
+        if e["side"] not in ("server", "both"):
+            continue
+        token = e["slug"]
+        if e["type"] == "datapack":
+            token = "datapack:" + token
+        if e["version"] is not None:
+            token = token + ":" + e["version"]
+        tokens.append(token)
+    value = ",".join(tokens)
+    if re.search(r"\s", value):
+        raise GenerateError("MODRINTH_PROJECTS contains whitespace or a newline")
+    return GEN_HEADER + "\n" + f"MODRINTH_PROJECTS={value}" + "\n"
+
+
+def build_client_tsv(doc, tiers, tier_set, versions_by_id, slug_to_pid, allowed_types):
+    rows = []  # (filename, sha256, url, dest, tiers_str, prefix)
+    for e in doc["mods"]:
+        if e["side"] not in ("client", "both"):
+            continue
+        slug = e["slug"]
+        if e["type"] == "datapack":
+            raise GenerateError(f"slug {slug!r} is a client-side datapack, which is unsupported")
+        dest = DEST_BY_TYPE[e["type"]]
+
+        cv = e["client_version"]
+        if cv is not None:
+            version = versions_by_id.get(cv)
+            if version is None:
+                raise GenerateError(
+                    f"client_version {cv!r} for slug {slug!r} was not returned by /versions"
+                )
+            expected_pid = slug_to_pid.get(slug)
+            if expected_pid is None:
+                raise GenerateError(f"could not resolve project id for slug {slug!r}")
+            if version.get("project_id") != expected_pid:
+                raise GenerateError(
+                    f"client_version {cv!r} belongs to project {version.get('project_id')!r}, "
+                    f"not slug {slug!r} (project {expected_pid!r})"
+                )
+        else:
+            version = resolve_latest(slug, allowed_types)
+            if version is None:
+                raise GenerateError(
+                    f"no fabric/1.21.11 version found for client slug {slug!r}"
+                )
+
+        f = primary_file(version, slug)
+        filename = f["filename"]
+        url = f["url"]
+        sha256 = download_sha256(url, f.get("hashes", {}).get("sha512"), slug)
+        tiers_str = "*" if e["client_tiers"] is None else ",".join(e["client_tiers"])
+        prefix = filename_prefix(filename) if dest == "mods" else "-"
+        rows.append((filename, sha256, url, dest, tiers_str, prefix))
+
+    # Check 5: within each tier, no two mods-dest rows may share a prefix.
+    per_tier = {t: {} for t in tiers}
+    for filename, _sha, _url, dest, tiers_str, prefix in rows:
+        if dest != "mods":
+            continue
+        row_tiers = tiers if tiers_str == "*" else tiers_str.split(",")
+        for t in row_tiers:
+            if prefix in per_tier[t]:
+                raise GenerateError(
+                    f"tier {t!r}: prefix {prefix!r} appears twice "
+                    f"({per_tier[t][prefix]} and {filename})"
+                )
+            per_tier[t][prefix] = filename
+
+    lines = [
+        GEN_HEADER,
+        "# Columns (TAB-separated): filename\tsha256\turl\tdest\ttiers\tprefix",
+    ]
+    for row in rows:
+        lines.append("\t".join(row))
+    return "\n".join(lines) + "\n", rows
+
+
+def build_client_purge(doc, allowed_types):
+    header = [
+        GEN_HEADER,
+        "# Filename prefixes of server-only mods, so the client installer can",
+        "# delete server-only jars a friend may still have in mods/.",
+    ]
+    prefixes = []
+    seen = set()
+    for e in doc["mods"]:
+        if e["side"] != "server" or e["type"] != "mod":
+            continue
+        slug = e["slug"]
+        try:
+            if e["version"] is not None:
+                version = resolve_pinned(slug, e["version"])
+            else:
+                version = resolve_latest(slug, allowed_types)
+        except GenerateError as exc:
+            print(f"warning: {exc}", file=sys.stderr)
+            continue
+        if version is None:
+            print(
+                f"warning: no fabric/1.21.11 version found for server-only mod {slug!r}; skipping",
+                file=sys.stderr,
+            )
+            continue
+        f = primary_file(version, slug)
+        prefix = filename_prefix(f["filename"])
+        if prefix not in seen:
+            seen.add(prefix)
+            prefixes.append(prefix)
+    return "\n".join(header + prefixes) + "\n", prefixes
+
+
+# --------------------------------------------------------------------------- #
+# Orchestration                                                                #
+# --------------------------------------------------------------------------- #
+
+def generate():
+    """Compute all three file contents. Returns (contents_by_path, stats)."""
+    doc = load_mods()
+    tiers, tier_set = validate(doc)
+    allowed = allowed_version_types(doc.get("server_default_version_type"))
+
+    # Batch the client lookups.
+    client_entries = [e for e in doc["mods"] if e["side"] in ("client", "both")]
+    pinned_ids = [e["client_version"] for e in client_entries if e["client_version"] is not None]
+    client_slugs = [e["slug"] for e in client_entries]
+    versions_by_id = batch_versions(pinned_ids)
+    slug_to_pid = batch_projects(client_slugs)
+
+    env_text = build_server_env(doc)
+    tsv_text, tsv_rows = build_client_tsv(
+        doc, tiers, tier_set, versions_by_id, slug_to_pid, allowed
+    )
+    purge_text, purge_prefixes = build_client_purge(doc, allowed)
+
+    contents = {
+        SERVER_ENV: env_text,
+        CLIENT_TSV: tsv_text,
+        CLIENT_PURGE: purge_text,
+    }
+
+    n_server = sum(1 for e in doc["mods"] if e["side"] == "server")
+    n_client = sum(1 for e in doc["mods"] if e["side"] == "client")
+    n_both = sum(1 for e in doc["mods"] if e["side"] == "both")
+    per_tier_jars = {t: 0 for t in tiers}
+    for filename, _sha, _url, dest, tiers_str, _prefix in tsv_rows:
+        if dest != "mods":
+            continue
+        row_tiers = tiers if tiers_str == "*" else tiers_str.split(",")
+        for t in row_tiers:
+            per_tier_jars[t] += 1
+
+    stats = {
+        "n_server": n_server,
+        "n_client": n_client,
+        "n_both": n_both,
+        "n_client_rows": len(tsv_rows),
+        "per_tier_jars": per_tier_jars,
+        "n_purge": len(purge_prefixes),
+    }
+    return contents, stats
+
+
+def cmd_write():
+    contents, stats = generate()
+    for path, text in contents.items():
+        path.write_text(text, encoding="utf-8")
+
+    print("Generated modpack manifests from mods.json:")
+    print(
+        f"  sides: {stats['n_server']} server, {stats['n_client']} client, "
+        f"{stats['n_both']} both"
+    )
+    print(f"  client files (rows in tsv): {stats['n_client_rows']}")
+    tier_str = ", ".join(f"{t}={n}" for t, n in stats["per_tier_jars"].items())
+    print(f"  per-tier client jars: {tier_str}")
+    print(f"  server-only purge prefixes: {stats['n_purge']}")
+    print("Wrote:")
+    for path in contents:
+        print(f"  {path}")
+    return 0
+
+
+def cmd_check():
+    import difflib
+
+    contents, _stats = generate()
+    stale = False
+    for path, want in contents.items():
+        try:
+            have = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            have = ""
+        if have != want:
+            stale = True
+            rel = path.relative_to(REPO_ROOT)
+            diff = difflib.unified_diff(
+                have.splitlines(keepends=True),
+                want.splitlines(keepends=True),
+                fromfile=f"{rel} (committed)",
+                tofile=f"{rel} (regenerated)",
+            )
+            sys.stdout.writelines(diff)
+    if stale:
+        print("\nFILES ARE STALE: run ./scripts/generate to regenerate.", file=sys.stderr)
+        return 1
+    print("All generated files are up to date.")
+    return 0
+
+
+def main(argv):
+    args = argv[1:]
+    if not args:
+        return cmd_write()
+    if args == ["--check"]:
+        return cmd_check()
+    print(__doc__, file=sys.stderr)
+    print(f"error: unrecognized arguments {args}", file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv))
+    except GenerateError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        sys.exit(1)

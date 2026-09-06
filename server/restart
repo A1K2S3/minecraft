@@ -1,0 +1,150 @@
+#!/bin/sh
+# Restart the Minecraft server after a mod change, safely.
+#
+# The deploy loop (see server/README.md, "Deploying a mod change") is: on the VM,
+# `git pull` then `docker compose up -d`. This script is what an operator runs for
+# that last step: it flushes the world to disk so no progress is lost, recreates
+# the containers so the new mods.generated.env / .env take effect, and reports.
+#
+# POSIX sh, no bashisms. Safe to re-run. Never prints or interpolates RCON_PASSWORD.
+set -eu
+
+log() { printf '%s\n' "$*"; }
+warn() { printf 'WARNING: %s\n' "$*" >&2; }
+die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+  printf 'Usage: sh restart [--force] [--logs] [-h|--help]\n' >&2
+  printf '  Flush the world, recreate the containers, and report.\n' >&2
+  printf '    --force   continue even if the pre-stop world save could not be confirmed\n' >&2
+  printf '    --logs    follow the container log after starting\n' >&2
+  printf '    -h, --help  show this help and exit\n' >&2
+}
+
+# --- arg parsing ---
+FORCE=0
+FOLLOW_LOGS=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --force)
+      FORCE=1
+      shift
+      ;;
+    --logs)
+      FOLLOW_LOGS=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+# --- location independence ---
+# Resolve the script's own directory and cd there, so the compose file we act on is
+# always the one next to this script, regardless of the operator's cwd.
+SCRIPT_DIR=""
+case "$0" in
+  */*) SCRIPT_DIR="$(dirname "$0")" ;;
+  *)   SCRIPT_DIR="." ;;
+esac
+cd "$SCRIPT_DIR" || die "Could not cd into script directory: $SCRIPT_DIR"
+
+[ -f "docker-compose.yml" ] || die "docker-compose.yml not found next to this script (in $(pwd)). Run this from the server/ directory of the repo."
+
+# --- preflight checks (fail before touching anything) ---
+command -v docker >/dev/null 2>&1 || die "docker is not on PATH. Install Docker and retry."
+
+# Prefer the compose plugin (`docker compose`); fall back to the legacy `docker-compose`
+# binary. Store which one works and route every compose call through compose() so the
+# rest of the script never assumes one or the other.
+COMPOSE_MODE=""
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_MODE="plugin"
+elif command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then
+  COMPOSE_MODE="legacy"
+else
+  die "Neither 'docker compose' nor 'docker-compose' works. Install Docker Compose and retry."
+fi
+
+compose() {
+  if [ "$COMPOSE_MODE" = "plugin" ]; then
+    docker compose "$@"
+  else
+    docker-compose "$@"
+  fi
+}
+
+# rcon runs a console command inside the running mc container. -T disables TTY
+# allocation so it works when invoked without a terminal (cron, ssh with no tty).
+# The itzg image's rcon-cli reads RCON_PASSWORD from the container environment on
+# its own -- never pass or echo the password here.
+rcon() {
+  compose exec -T mc rcon-cli "$@"
+}
+
+# ./.env holds RCON_PASSWORD. Without it, compose interpolates an empty password and
+# the server comes up with RCON effectively open -- so refuse to run.
+[ -f "./.env" ] || die "./.env is missing. Run: cp .env.example .env  and set RCON_PASSWORD before starting the server."
+[ -f "./mods.generated.env" ] || die "./mods.generated.env is missing. Generate it from ../mods.json with ../scripts/generate."
+
+# --- step 1: save the world -------------------------------------------------------
+# Is the mc container actually running? A restart after a crash or on a fresh clone
+# is legitimate, so "not running" is not an error -- just skip the save.
+RUNNING="no"
+CID="$(compose ps -q mc 2>/dev/null || true)"
+if [ -n "$CID" ]; then
+  if [ "$(docker inspect -f '{{.State.Running}}' "$CID" 2>/dev/null || echo false)" = "true" ]; then
+    RUNNING="yes"
+  fi
+fi
+
+if [ "$RUNNING" != "yes" ]; then
+  log "[1/4] mc container is not running; nothing to save."
+else
+  log "[1/4] Saving the world before stopping..."
+  # Warn any players, then give them 5 seconds. Best effort -- do not abort if the
+  # broadcast fails.
+  if ! rcon say "Server restarting in 5 seconds..."; then
+    warn "Could not broadcast the restart warning to players (continuing)."
+  fi
+  sleep 5
+  # save-all flush forces a full synchronous flush to disk; that is sufficient before
+  # a graceful stop. Deliberately NOT using save-off here: there is no file copy to
+  # protect, and a failure would leave auto-save disabled on the running server.
+  if SAVE_OUT="$(rcon save-all flush 2>&1)"; then
+    log "save-all flush: $SAVE_OUT"
+  else
+    warn "save-all flush FAILED or could not be confirmed:"
+    warn "$SAVE_OUT"
+    if [ "$FORCE" = "1" ]; then
+      warn "--force given; stopping anyway without a confirmed save."
+    else
+      die "World save could not be confirmed. Fix the server (is RCON up?) and retry, or re-run with --force to stop anyway."
+    fi
+  fi
+fi
+
+# --- step 2: stop -----------------------------------------------------------------
+log "[2/4] Stopping and removing containers (compose down)..."
+compose down
+
+# --- step 3: start ----------------------------------------------------------------
+log "[3/4] Starting containers (compose up -d)..."
+compose up -d
+
+# --- step 4: report ---------------------------------------------------------------
+log "[4/4] Current status:"
+compose ps
+
+if [ "$FOLLOW_LOGS" = "1" ]; then
+  log "Following the container log (Ctrl-C to stop; the server keeps running)..."
+  compose logs -f
+else
+  log "Follow the log with: docker compose logs -f    (or re-run this script with --logs)"
+fi

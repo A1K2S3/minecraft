@@ -1,0 +1,34 @@
+services:
+  mc:
+    image: itzg/minecraft-server
+    container_name: mc
+    tty: true
+    stdin_open: true
+    ports:
+      - "25565:25565"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    # ./.env             -- secrets, NOT committed (see .env.example)
+    # ./mods.generated.env -- MODRINTH_PROJECTS, generated from ../mods.json by scripts/generate
+    env_file:
+      - ./.env
+      - ./mods.generated.env
+    environment:
+      EULA: "true"
+      TYPE: "FABRIC"
+      VERSION: "1.21.11"
+      MEMORY: "6G"
+      DIFFICULTY: "normal"
+      MODE: "survival"
+      ONLINE_MODE: "false"
+      MAX_TICK_TIME: "-1"
+      VIEW_DISTANCE: "8"
+      SIMULATION_DISTANCE: "6"
+      USE_AIKAR_FLAGS: "true"
+      ENABLE_RCON: "true"
+      OPS: "Guardian"
+      OP_PERMISSION_LEVEL: "4"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+      MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: "beta"
