@@ -12,3 +12,7 @@ new-jars-manifest.txt
 
 # Server runtime data (world, logs, downloaded mods) -- created by docker compose.
 server/data/
+
+# Bootstrap staging area -- server/bootstrap downloads the B2 snapshot here
+# before moving it into server/data/, and removes it on exit.
+server/.restore-stage/

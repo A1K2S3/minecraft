@@ -14,16 +14,18 @@ warn() { printf 'WARNING: %s\n' "$*" >&2; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
-  printf 'Usage: sh restart [--force] [--logs] [-h|--help]\n' >&2
+  printf 'Usage: sh restart [--force] [--logs] [--no-backup-check] [-h|--help]\n' >&2
   printf '  Flush the world, recreate the containers, and report.\n' >&2
   printf '    --force   continue even if the pre-stop world save could not be confirmed\n' >&2
   printf '    --logs    follow the container log after starting\n' >&2
+  printf '    --no-backup-check  start even if the Backblaze B2 values in .env are unset\n' >&2
   printf '    -h, --help  show this help and exit\n' >&2
 }
 
 # --- arg parsing ---
 FORCE=0
 FOLLOW_LOGS=0
+NO_BACKUP_CHECK=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --force)
@@ -32,6 +34,10 @@ while [ $# -gt 0 ]; do
       ;;
     --logs)
       FOLLOW_LOGS=1
+      shift
+      ;;
+    --no-backup-check)
+      NO_BACKUP_CHECK=1
       shift
       ;;
     -h|--help)
@@ -93,6 +99,23 @@ rcon() {
 [ -f "./.env" ] || die "./.env is missing. Run: cp .env.example .env  and set RCON_PASSWORD before starting the server."
 [ -f "./mods.generated.env" ] || die "./mods.generated.env is missing. Generate it from ../mods.json with ../scripts/generate."
 
+# The compose file always brings up the backup sidecar, and an unconfigured
+# sidecar just crash-loops -- so catch it here with an explanation instead.
+# Read the values without ever echoing them.
+if [ "$NO_BACKUP_CHECK" = "0" ]; then
+  MISSING=""
+  for v in RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+    if [ -z "$(sed -n "s/^[[:space:]]*$v=//p" ./.env | tail -n 1)" ]; then
+      MISSING="$MISSING $v"
+    fi
+  done
+  if [ -n "$MISSING" ]; then
+    die "These Backblaze B2 backup values are empty in ./.env:$MISSING
+Fill them in (see .env.example) so the world is backed up off this box. If you
+are mid-incident and need the server up regardless, re-run with --no-backup-check."
+  fi
+fi
+
 # --- step 1: save the world -------------------------------------------------------
 # Is the mc container actually running? A restart after a crash or on a fresh clone
 # is legitimate, so "not running" is not an error -- just skip the save.
@@ -143,8 +166,10 @@ log "[4/4] Current status:"
 compose ps
 
 if [ "$FOLLOW_LOGS" = "1" ]; then
-  log "Following the container log (Ctrl-C to stop; the server keeps running)..."
-  compose logs -f
+  log "Following the server log (Ctrl-C to stop; the server keeps running)..."
+  # Scoped to mc on purpose: the stack also runs the backup sidecar, whose
+  # output would otherwise interleave with the server's.
+  compose logs -f mc
 else
-  log "Follow the log with: docker compose logs -f    (or re-run this script with --logs)"
+  log "Follow the log with: docker compose logs -f mc    (or re-run this script with --logs)"
 fi

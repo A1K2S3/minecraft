@@ -12,9 +12,10 @@ is **generated** from it.
 mods.json                     hand-edited. The ONLY place a mod is declared.
 scripts/generate              mods.json -> the three generated files below
 server/
-  docker-compose.yml          the server, as it runs
+  docker-compose.yml          the server + the backup sidecar, as they run
+  bootstrap                   restore the world from Backblaze B2 if absent, then start
   restart                     save the world, recreate the containers, report
-  .env                        NOT COMMITTED. Holds RCON_PASSWORD.
+  .env                        NOT COMMITTED. RCON_PASSWORD + the four Backblaze B2 values.
   .env.example                template for .env
   mods.generated.env          GENERATED. MODRINTH_PROJECTS=...
 client/
@@ -26,10 +27,12 @@ client/
 
 ## Hard rules
 
-1. **This repo is PUBLIC. Never commit the RCON password**, or any other secret, in any
-   file, at any commit. `docker-compose.yml` must only ever contain the
-   `${RCON_PASSWORD}` reference; the real value lives in `server/.env`, which is
-   gitignored. Before pushing, check: `git log --all -S '<the secret>'` must be empty.
+1. **This repo is PUBLIC. Never commit the RCON password**, the Backblaze B2 key, the
+   restic password, or any other secret, in any file, at any commit.
+   `docker-compose.yml` must only ever contain the `${RCON_PASSWORD}` reference, and the
+   B2 values must reach the backup sidecar through `env_file` alone — never named in the
+   compose file. The real values live in `server/.env`, which is gitignored. Before
+   pushing, check: `git log --all -S '<the secret>'` must be empty.
 2. **Never hand-edit a `*.generated.*` file.** Edit `mods.json` and re-run
    `scripts/generate`. A hand edit is silently overwritten on the next run and puts the
    server and the clients out of sync.
@@ -40,6 +43,16 @@ client/
    and the clients silently drift.
 5. The four files `mods.json`, `server/mods.generated.env`, `client/mods.generated.tsv`,
    and `client/purge.generated.txt` are **one commit**. Never commit some without the rest.
+6. **`RESTIC_PASSWORD` is not a rotatable password — it is the decryption key for every
+   backup.** Changing it orphans the existing Backblaze B2 repository, and losing it
+   makes the world permanently unrecoverable even though the bytes are still in the
+   bucket. Never generate a new one for an existing repository, and never suggest "just
+   rotate it" the way `RCON_PASSWORD` can be rotated.
+7. **Never treat "cannot read the B2 repository" as "there is no backup".** A wrong key,
+   a wrong restic password and an unreachable B2 all look like an empty repository if you
+   only check an exit code — and acting on that starts a fresh world on top of a world
+   that still exists. `server/bootstrap` distinguishes the two and refuses to start on
+   anything but a genuinely absent repository; keep it that way.
 
 ## Adding a mod
 
@@ -149,9 +162,12 @@ stopping, so nothing is lost, then recreates the containers so the new
 | `--force` | stop even if the pre-stop save could not be confirmed |
 
 It refuses to run without `./server/.env` (an empty `RCON_PASSWORD` would bring the server
-up with RCON effectively open) or without `mods.generated.env`. If the container is not
-running it skips the save rather than failing, so it is safe after a crash or on a fresh
-clone, and safe to run twice.
+up with RCON effectively open), without `mods.generated.env`, or with any of the four
+Backblaze B2 backup values empty in `.env` — pass `--no-backup-check` to override that
+last one mid-incident. If the container is not running it skips the save rather than
+failing, so it is safe after a crash or on a fresh clone, and safe to run twice.
+
+On a machine that has no world yet, run `./server/bootstrap` instead — see Backups below.
 
 The manual equivalent is `cd server && docker compose up -d`. Removing a mod stops the
 container downloading it but does **not** delete the jar already in `data/mods/` — delete
@@ -178,6 +194,30 @@ They resolve `mods.generated.tsv` and `purge.generated.txt` in this order:
 The installers depend on nothing but `curl`/`wget` and `sha256sum`/`shasum` — no `jq`, no
 `python3`, no Modrinth API calls. Keep it that way; that is the whole reason the tables are
 generated and committed rather than resolved at install time.
+
+## Backups
+
+`server/docker-compose.yml` runs an `itzg/mc-backup` sidecar that pushes the world to
+**Backblaze B2** via restic at **00:00 UTC daily**, keeping **one snapshot**
+(`--keep-last 1`). Credentials come from `server/.env` only. Full detail — retention
+trade-offs, how to check a run, how to restore — is in `server/README.md` ("Backups");
+do not duplicate it here.
+
+Two consequences worth carrying in your head:
+
+- **The repo plus four values in `.env` is the entire recovery kit.** `server/bootstrap`
+  restores the world from B2 when a machine has none, so nothing on the VM outside
+  `.env` is load-bearing. Anything you add to the server that lives *only* on the VM
+  breaks that property — put it in the repo instead.
+- **One snapshot means no history.** Damage not noticed within 24 hours is permanent.
+  If a session is about to do something risky to the world (a biome mod, a version bump,
+  a mass block edit), take a snapshot first with
+  `docker compose exec backup backup now` — or widen `PRUNE_RESTIC_RETENTION` before
+  starting, not after.
+
+`bootstrap` shells out to `restic/restic:latest` for the snapshot query and the restore,
+so the VM needs no restic install. Like the client installers it depends on nothing
+exotic — no `jq`, no `python3`. Keep it that way.
 
 ## Tiers
 

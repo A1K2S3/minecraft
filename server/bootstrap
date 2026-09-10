@@ -1,0 +1,245 @@
+#!/bin/sh
+# Bring the server up on a machine that has nothing but this repo.
+#
+# Run this instead of `docker compose up -d` the first time. It asks the
+# Backblaze B2 restic repository named in ./.env whether a world is already
+# backed up there; if one is, it restores it into ./data BEFORE the server
+# starts, so the container boots the real world instead of generating a brand
+# new one. If the repository is empty (a genuinely new server) it just starts.
+#
+# Safe to re-run: once ./data/world exists it never touches it again, so this
+# is also a fine way to start the stack day to day.
+#
+# POSIX sh, no bashisms. Never prints or interpolates any secret.
+set -eu
+
+RESTIC_IMAGE="restic/restic:latest"
+STAGE_DIR=".restore-stage"
+
+log() { printf '%s\n' "$*"; }
+warn() { printf 'WARNING: %s\n' "$*" >&2; }
+die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+  printf 'Usage: sh bootstrap [--force-restore] [--logs] [-h|--help]\n' >&2
+  printf '  Restore the world from Backblaze B2 if this machine has none, then start the server.\n' >&2
+  printf '    --force-restore  restore over an EXISTING local world (destructive; containers must be stopped)\n' >&2
+  printf '    --logs           follow the server log after starting\n' >&2
+  printf '    -h, --help       show this help and exit\n' >&2
+}
+
+# --- arg parsing ---
+FORCE_RESTORE=0
+FOLLOW_LOGS=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --force-restore)
+      FORCE_RESTORE=1
+      shift
+      ;;
+    --logs)
+      FOLLOW_LOGS=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+# --- location independence ---
+# Act on the compose file next to this script, whatever the operator's cwd is.
+SCRIPT_DIR=""
+case "$0" in
+  */*) SCRIPT_DIR="$(dirname "$0")" ;;
+  *)   SCRIPT_DIR="." ;;
+esac
+cd "$SCRIPT_DIR" || die "Could not cd into script directory: $SCRIPT_DIR"
+
+[ -f "docker-compose.yml" ] || die "docker-compose.yml not found next to this script (in $(pwd)). Run this from the server/ directory of the repo."
+
+# --- step 1: preflight ------------------------------------------------------------
+log "[1/5] Preflight..."
+
+command -v docker >/dev/null 2>&1 || die "docker is not on PATH. Install Docker and retry."
+
+COMPOSE_MODE=""
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_MODE="plugin"
+elif command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then
+  COMPOSE_MODE="legacy"
+else
+  die "Neither 'docker compose' nor 'docker-compose' works. Install Docker Compose and retry."
+fi
+
+compose() {
+  if [ "$COMPOSE_MODE" = "plugin" ]; then
+    docker compose "$@"
+  else
+    docker-compose "$@"
+  fi
+}
+
+[ -f "./.env" ] || die "./.env is missing. Run: cp .env.example .env  and fill it in (RCON_PASSWORD plus the four Backblaze B2 values) before starting the server."
+[ -f "./mods.generated.env" ] || die "./mods.generated.env is missing. Generate it from ../mods.json with ../scripts/generate."
+
+# Read a value out of ./.env without ever echoing it. Last assignment wins,
+# matching how docker compose itself reads the file.
+env_val() {
+  sed -n "s/^[[:space:]]*$1=//p" ./.env | tail -n 1
+}
+
+MISSING=""
+for v in RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+  if [ -z "$(env_val "$v")" ]; then
+    MISSING="$MISSING $v"
+  fi
+done
+if [ -n "$MISSING" ]; then
+  die "These Backblaze B2 values are empty in ./.env:$MISSING
+Fill them in (see .env.example for where each one comes from) and retry. Without
+them there is no off-box backup, and no world to restore on a fresh machine."
+fi
+
+log "      docker, compose, .env and mods.generated.env all present."
+
+# --- step 2: is there already a world here? ---------------------------------------
+log "[2/5] Checking for a local world in ./data/world ..."
+
+LOCAL_WORLD="no"
+if [ -d "./data/world" ] && [ -n "$(ls -A ./data/world 2>/dev/null || true)" ]; then
+  LOCAL_WORLD="yes"
+fi
+
+if [ "$LOCAL_WORLD" = "yes" ] && [ "$FORCE_RESTORE" = "0" ]; then
+  log "      A world is already here. Leaving it alone -- skipping the restore."
+  log "      (To deliberately replace it with the B2 snapshot: stop the stack with"
+  log "       'docker compose down', then re-run with --force-restore.)"
+  SKIP_RESTORE=1
+else
+  SKIP_RESTORE=0
+fi
+
+# A forced restore must never race the running server: it writes ./data
+# underneath it.
+if [ "$FORCE_RESTORE" = "1" ]; then
+  CID="$(compose ps -q mc 2>/dev/null || true)"
+  if [ -n "$CID" ] && [ "$(docker inspect -f '{{.State.Running}}' "$CID" 2>/dev/null || echo false)" = "true" ]; then
+    die "--force-restore given but the mc container is running. Stop it first: docker compose down"
+  fi
+  if [ "$LOCAL_WORLD" = "yes" ]; then
+    warn "--force-restore: the existing ./data/world will be overwritten by the B2 snapshot."
+  fi
+fi
+
+# --- step 3: ask B2 what it has ---------------------------------------------------
+if [ "$SKIP_RESTORE" = "1" ]; then
+  log "[3/5] Skipped (a local world is already present)."
+  log "[4/5] Skipped (nothing to restore)."
+else
+  log "[3/5] Asking the B2 restic repository whether a world is backed up..."
+
+  # Credentials reach restic through --env-file, so they are never on a command
+  # line and never in this script's output.
+  SNAP_OUT=""
+  SNAP_RC=0
+  SNAP_OUT="$(docker run --rm --env-file "$(pwd)/.env" "$RESTIC_IMAGE" \
+    snapshots --latest 1 --json 2>&1)" || SNAP_RC=$?
+
+  HAVE_SNAPSHOT="no"
+  if [ "$SNAP_RC" = "0" ]; then
+    # --json gives [] for an initialised but empty repository, or an array of
+    # snapshot objects. No jq on purpose (see AGENTS.md).
+    if printf '%s' "$SNAP_OUT" | grep -q '"short_id"'; then
+      HAVE_SNAPSHOT="yes"
+    fi
+  else
+    # A missing repository is a legitimate "new server" answer. Anything else --
+    # a wrong password, a bad key, B2 unreachable -- is NOT, and must not be
+    # mistaken for "no backup exists": that would start a fresh world while a
+    # perfectly good one sits in the bucket.
+    case "$SNAP_OUT" in
+      *"unable to open config file"*|*"repository does not exist"*|*"repository not found"*)
+        log "      No restic repository in B2 yet -- treating this as a brand new server."
+        log "      The backup sidecar will create the repository on its first run."
+        ;;
+      *)
+        printf 'ERROR: could not read the B2 restic repository (exit %s):\n' "$SNAP_RC" >&2
+        printf '%s\n' "$SNAP_OUT" >&2
+        die "Refusing to continue. If this is an auth, password or network problem, a fresh
+world would start now and the real world would stay stranded in B2. Fix the four
+B2 values in ./.env (or the network) and retry. Only if you are certain the
+bucket is empty, start the stack directly with: docker compose up -d"
+        ;;
+    esac
+  fi
+
+  # --- step 4: restore ------------------------------------------------------------
+  if [ "$HAVE_SNAPSHOT" = "no" ]; then
+    log "[4/5] Nothing to restore -- the server will generate a new world."
+  else
+    log "[4/5] Snapshot found. Restoring it into ./data (this downloads the whole world)..."
+
+    rm -rf "./$STAGE_DIR"
+    mkdir -p "./$STAGE_DIR"
+    # Clean the staging directory up on any exit path, including a failure.
+    trap 'rm -rf "./'"$STAGE_DIR"'"' EXIT INT TERM
+
+    docker run --rm \
+      --env-file "$(pwd)/.env" \
+      -v "$(pwd)/$STAGE_DIR:/restore" \
+      "$RESTIC_IMAGE" restore latest --target /restore \
+      || die "restic restore failed. ./data was not touched."
+
+    # The sidecar backs up with `cd /data && restic backup .`, so restic records
+    # the absolute path and the restore lands at <target>/data/... Older or
+    # hand-made snapshots may sit at the target root instead -- accept both.
+    if [ -d "./$STAGE_DIR/data" ]; then
+      RESTORED="./$STAGE_DIR/data"
+    else
+      RESTORED="./$STAGE_DIR"
+    fi
+
+    [ -d "$RESTORED/world" ] || die "The restored snapshot has no world/ directory (looked in $RESTORED).
+./data was not touched. Inspect the snapshot by hand before retrying:
+  docker run --rm --env-file \"\$(pwd)/.env\" $RESTIC_IMAGE snapshots"
+
+    if [ "$FORCE_RESTORE" = "1" ] && [ "$LOCAL_WORLD" = "yes" ]; then
+      log "      Removing the existing ./data/world before restoring over it."
+      rm -rf "./data/world"
+    fi
+
+    mkdir -p "./data"
+    # -a keeps ownership, timestamps and dotfiles; the /. form copies the
+    # directory's contents rather than the directory itself.
+    cp -a "$RESTORED/." "./data/"
+
+    rm -rf "./$STAGE_DIR"
+    trap - EXIT INT TERM
+
+    [ -d "./data/world" ] || die "Restore finished but ./data/world is still missing. Do not start the server; investigate."
+    log "      Restored. ./data/world is in place."
+  fi
+fi
+
+# --- step 5: start ----------------------------------------------------------------
+log "[5/5] Starting containers (compose up -d)..."
+compose up -d
+compose ps
+
+log ""
+log "The mc container downloads every mod in mods.generated.env on first boot; that"
+log "takes a few minutes. The backup sidecar runs at 00:00 UTC daily and keeps one"
+log "snapshot in B2."
+
+if [ "$FOLLOW_LOGS" = "1" ]; then
+  log "Following the server log (Ctrl-C to stop; the server keeps running)..."
+  compose logs -f mc
+else
+  log "Follow the log with: docker compose logs -f mc    (or re-run this script with --logs)"
+fi
