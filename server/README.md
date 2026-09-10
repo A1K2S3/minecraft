@@ -159,6 +159,41 @@ before stopping, so it captures the pre-deploy state. The problem is *when* it f
    with it. There is no reset and no recovery: lose it and the bytes in B2 are
    permanently unreadable. Keep a copy somewhere that is not this VM.
 
+### Why a run takes as long as it does
+
+**It does not re-upload the world every night.** restic splits files into
+content-defined chunks and stores each chunk once, so a nightly run uploads only chunks
+that are genuinely new. It also picks the previous snapshot as a *parent* and skips any
+file whose size and mtime are unchanged — those are not even re-read.
+
+What that means in practice:
+
+- **The first run uploads everything.** There is no parent snapshot and no chunk in the
+  repository yet, so the whole world goes up. This is bandwidth-bound: on a home
+  connection a multi-GB world can take a long while. It happens exactly once.
+- **Later runs re-read more than they upload.** Minecraft rewrites entire `.mca` region
+  files when it saves, so their mtimes change and restic must re-read and re-chunk them
+  even where the contents barely moved. Expect disk and CPU time roughly proportional to
+  the world size, but upload far smaller than it. "Slow" and "uploading a lot" are not
+  the same thing here — the log tells you which (`Added to the repository: X MiB`).
+- **The cache matters.** `RESTIC_CACHE_DIR` points at the `restic-cache` named volume
+  precisely so the repository index survives `./restart`. Without it every deploy makes
+  restic re-download the index from B2 before it can start.
+
+**Saving is paused for the duration of a run.** The sidecar flushes and pauses world
+saving around the copy so the snapshot is not torn, which means a long run is a long
+window in which player progress is not being written to disk — a crash during it loses
+that window. Another reason to keep the backup lean.
+
+If a run is slower than you want, the knobs are, in order of effect:
+
+| Knob | Effect |
+| --- | --- |
+| `EXCLUDES` | The cheapest win: anything the container can regenerate should be in here, not in B2. |
+| `RESTIC_LIMIT_UPLOAD` | KiB/s ceiling. Does not speed a run up — it stops the run saturating your uplink. |
+| `PAUSE_IF_NO_PLAYERS` | Skips backups while the server is empty. Trades freshness for load. |
+| `--keep-last N` | More snapshots cost little extra space (dedup) and nothing in run time. |
+
 ### Check on it
 
 ```sh

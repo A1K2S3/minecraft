@@ -91,6 +91,18 @@ services:
       # First boot downloads every mod, which can outlast the default 5x10s.
       RCON_RETRIES: "10"
       RCON_RETRY_INTERVAL: "30s"
+      # restic caches the repository index and snapshot metadata locally and
+      # needs it to work out what is already stored. Its default location is
+      # inside the container, which ./restart destroys on every deploy --
+      # forcing restic to re-download the index from B2 before each backup.
+      # Point it at a named volume so the cache survives.
+      RESTIC_CACHE_DIR: "/restic-cache"
     volumes:
       # Read-only: this container must never be able to write the world.
       - ./data:/data:ro
+      - restic-cache:/restic-cache
+
+volumes:
+  # Disposable -- restic rebuilds it from the repository if it is ever lost.
+  # `docker compose down -v` will remove it; a plain `down` keeps it.
+  restic-cache:
