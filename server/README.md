@@ -131,10 +131,22 @@ this VM's disk, so a dead disk does not take the backup with it.
 | Consistency | The sidecar issues `save-all` over RCON and syncs the filesystem before reading, so the snapshot is not a torn mid-write copy |
 | Mount | `./data:/data:**ro**` — the sidecar can never write the world |
 
-It does **not** back up on container start (`BACKUP_ON_STARTUP: "false"`). That is
-deliberate: `restart` recreates the containers on every deploy, and with a
-one-snapshot retention an on-start backup would replace the good snapshot with a
-just-deployed one each time.
+It does **not** back up on container start (`BACKUP_ON_STARTUP: "false"`, against the
+image's default of `true`). Two reasons:
+
+- `restart` recreates the containers on every deploy, so an on-start backup would fire
+  whenever anyone deploys — and since retention is one snapshot, each run deletes the
+  previous one. The backup schedule would belong to whoever last ran a deploy.
+- **The case that actually hurts:** if the stack ever comes up *without the real world* —
+  `docker compose up -d` on a fresh box instead of `./bootstrap`, or a wiped `data/` —
+  the server generates an empty world, and an on-start backup would snapshot that and
+  prune the only good snapshot. One wrong command and the backup is gone. With backups on
+  a schedule instead, a mistake takes up to 24 hours to reach B2, and that gap is the
+  chance to notice.
+
+(A snapshot taken right after a deploy is not itself bad — `restart` flushes the world
+before stopping, so it captures the pre-deploy state. The problem is *when* it fires and
+*what it might capture*, not the deploy.)
 
 ### Two things to know about a one-snapshot retention
 

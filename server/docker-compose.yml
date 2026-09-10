@@ -56,9 +56,21 @@ services:
       # only affects log timestamps) and it overrides BACKUP_INTERVAL entirely.
       CRON_SCHEDULE: "0 0 * * *"
       TZ: "UTC"
-      # Do NOT back up on container start. ./restart recreates the containers
-      # on every deploy, and with a one-snapshot retention an on-start backup
-      # would replace the good snapshot with a just-deployed one each time.
+      # Do NOT back up on container start (the image defaults to true).
+      #
+      # ./restart recreates the containers on every deploy, so an on-start
+      # backup fires whenever anyone deploys -- and because retention is one
+      # snapshot, each one deletes the previous. That hands the backup schedule
+      # to whoever last ran a deploy.
+      #
+      # The case that actually hurts: if the stack ever comes up WITHOUT the
+      # real world -- `docker compose up -d` on a fresh box instead of
+      # ./bootstrap, or a wiped data/ -- the server generates an empty world
+      # and an on-start backup would snapshot that and prune the only good
+      # snapshot. One wrong command and the backup is gone.
+      #
+      # Secondary reason: at startup mc may still be downloading mods, so the
+      # pre-backup save-all over RCON can fail.
       BACKUP_ON_STARTUP: "false"
       BACKUP_METHOD: "restic"
       # Keep exactly one snapshot -- restic forget runs with this after each
