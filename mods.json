@@ -383,12 +383,9 @@
       "side": "client",
       "type": "shaderpack",
       "version": null,
-      "notes": "Shaderpack, installed to shaderpacks/. Shader tiers only; profile MEDIUM (pandit) / HIGH (modi).",
+      "notes": "Shaderpack, installed to shaderpacks/. Every tier; profile POTATO (dalit) / MEDIUM (pandit) / HIGH (modi).",
       "client_version": "VMHXIk50",
-      "client_tiers": [
-        "pandit",
-        "modi"
-      ]
+      "client_tiers": null
     },
     {
       "name": "Continuity",
@@ -466,12 +463,9 @@
       "side": "client",
       "type": "mod",
       "version": null,
-      "notes": "Shader loader. Shader tiers only. Hard-pins Sodium 0.8.7.",
+      "notes": "Shader loader. Every tier. Hard-pins Sodium 0.8.7.",
       "client_version": "fDpuVzVr",
-      "client_tiers": [
-        "pandit",
-        "modi"
-      ]
+      "client_tiers": null
     },
     {
       "name": "Jade \ud83d\udd0d",
@@ -539,24 +533,9 @@
       "side": "client",
       "type": "mod",
       "version": null,
-      "notes": "Base Sodium build, non-shader tier only. Iris hard-pins Sodium 0.8.7, so the shader tiers use the other sodium entry instead. Never install both.",
-      "client_version": "vqUoGREs",
-      "client_tiers": [
-        "dalit"
-      ]
-    },
-    {
-      "name": "Sodium (shader tiers)",
-      "slug": "sodium",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "The Sodium build Iris 1.10.7 hard-pins. Shader tiers only; replaces the base Sodium build.",
+      "notes": "The Sodium build Iris 1.10.7 hard-pins. Every tier runs Iris, so this is the only Sodium build shipped -- there is no second entry.",
       "client_version": "UddlN6L4",
-      "client_tiers": [
-        "pandit",
-        "modi"
-      ]
+      "client_tiers": null
     },
     {
       "name": "Sound Physics Remastered",

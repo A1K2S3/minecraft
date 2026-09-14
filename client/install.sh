@@ -36,7 +36,7 @@ die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 usage() {
   printf 'Usage: sh install.sh (--dalit | --pandit | --modi) [--dir DIR] [--manifest PATH-OR-URL]\n' >&2
   printf '  A tier is REQUIRED:\n' >&2
-  printf '    --dalit   very low end: no shaders, minimal settings, -Xmx3G\n' >&2
+  printf '    --dalit   very low end: Complementary shaders (POTATO), minimal settings, -Xmx3G\n' >&2
   printf '    --pandit  medium: Complementary shaders (MEDIUM), -Xmx5G\n' >&2
   printf '    --modi    dedicated GPU: Complementary shaders (HIGH), -Xmx8G\n' >&2
   printf '    --manifest PATH-OR-URL  override the generated mods.generated.tsv source (testing/local)\n' >&2
@@ -100,7 +100,7 @@ case "$TIER" in
       T_MIPMAP=0;           T_BIOME_BLEND=0;   T_MAXFPS=60
       T_ENTITY_SHADOWS=false; T_AO=false;      T_ENTITY_DIST_SCALE=0.5
       T_XMX="3G"
-      T_COMP_PROFILE=""
+      T_COMP_PROFILE="POTATO"
       T_SOUND_PHYSICS=false
       T_LAMBDYN="fastest"
       T_CONTINUITY=false
@@ -557,6 +557,20 @@ awk -F"$TAB" '{print $2}' "$INACTIVE_MODS" | sort -u | while IFS= read -r _ip; d
     done
   fi
 done
+# 3. Any jar matching an ACTIVE prefix whose filename is not the active one is a
+# superseded build of a mod we do install -- the pre-Iris Sodium left by a dalit
+# install from before every tier had shaders, or any mod whose pin was bumped. It is
+# removed here rather than left for H.1, which would abort the whole install on a
+# duplicate a friend has no way to resolve by hand.
+while IFS="$TAB" read -r _af _asha _aurl _adest _ap; do
+  [ "$_adest" = "mods" ] || continue
+  for f in "$MODS_DIR/$_ap"*.jar; do
+    [ -f "$f" ] || continue
+    [ "$(basename "$f")" = "$_af" ] && continue
+    log "Tier '$TIER': removing superseded build for prefix '$_ap': $(basename "$f")"
+    rm -f "$f"
+  done
+done < "$ACTIVE_ROWS"
 
 # --- A/B: vanilla base version ---
 VERSION_DIR="$TARGET_DIR/versions/${FABRIC_MC_VERSION}"
@@ -889,9 +903,9 @@ entityDistanceScaling $T_ENTITY_DIST_SCALE" | merge_kv_file "$OPTIONS_TXT" ":"
   # has no master enable field (it is a pure optimizer, active once installed),
   # so neither needs a written config -- installing the jar is "on".
 
-  # Iris (pandit/modi only) -- point it at the shaderpack, enable it, and set the
-  # tier's Complementary profile. Iris stores the selected pack in
-  # config/iris.properties (java.util.Properties) and per-shaderpack options --
+  # Iris (every tier the manifest gives a shaderpack row) -- point it at the pack,
+  # enable it, and set the tier's Complementary profile. Iris stores the selected pack
+  # in config/iris.properties (java.util.Properties) and per-shaderpack options --
   # including the profile -- in shaderpacks/<shaderPack>.txt, where <shaderPack> is
   # exactly the iris.properties "shaderPack" value (the .zip name for a zip pack).
   # Confirmed against the Iris jar: Iris.class resolves
@@ -912,8 +926,8 @@ enableShaders true" | merge_kv_file "$IRIS_PROPERTIES" "="
 fi
 
 # --- H: verify all mod jars ---
-# dalit: 43 active jars; pandit/modi: 44 active jars (Sodium swapped to 0.8.7, plus
-# Iris). The active jar count is derived from the manifest for this tier. Non-mod files
+# Every tier installs the same 44 active jars -- all three now run Iris + Sodium 0.8.7.
+# The active jar count is derived from the manifest for this tier. Non-mod files
 # (the resourcepack, and the shaderpack for shader tiers) live in resourcepacks/ and
 # shaderpacks/ and are verified separately in H.4 below.
 log "[8/8] Verifying all ${EXPECTED_JAR_COUNT} mod jars by SHA-256..."
@@ -980,8 +994,8 @@ done
 
 # --- H.2: remove our own tier-swap artifacts before the manifest check. A jar whose
 # filename is named by the FULL manifest (any tier) but is NOT active for this tier
-# (e.g. the base Sodium build left by a dalit->pandit switch) is our own artifact and
-# is safe to delete. This must not touch any file the manifest does not name; H.1 above
+# (e.g. a build left behind by a tier switch) is our own artifact and is safe to
+# delete. This must not touch any file the manifest does not name; H.1 above
 # already aborted on any duplicate a user introduced by hand. ---
 for f in "$MODS_DIR"/*.jar; do
   [ -f "$f" ] || continue
@@ -1054,7 +1068,7 @@ log "Verified jar count: $VERIFIED_COUNT / $EXPECTED_JAR_COUNT (+ $NONMODS_VERIF
 if [ "$HAS_SHADERS" = "1" ]; then
   log "Tier applied: $TIER (RAM -Xmx${T_XMX}; shaders ON: Iris + Sodium 0.8.7 + Complementary $T_COMP_PROFILE)."
 else
-  log "Tier applied: $TIER (RAM -Xmx${T_XMX}; no shaders, Sodium 0.8.14-beta.2)."
+  log "Tier applied: $TIER (RAM -Xmx${T_XMX}; no shaders -- no shaderpack row is active for this tier)."
 fi
 log "Reminder: do not add OptiFine — Sodium is included."
 

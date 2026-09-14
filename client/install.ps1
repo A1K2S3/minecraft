@@ -52,7 +52,7 @@ function Fail($msg) {
 function Show-Usage {
     Write-Host "Usage: install.ps1 (-dalit | -pandit | -modi) [-Dir DIR] [-Manifest PATH-OR-URL]"
     Write-Host "  A tier is REQUIRED:"
-    Write-Host "    -dalit   very low end: no shaders, minimal settings, -Xmx3G"
+    Write-Host "    -dalit   very low end: Complementary shaders (POTATO), minimal settings, -Xmx3G"
     Write-Host "    -pandit  medium: Complementary shaders (MEDIUM), -Xmx5G"
     Write-Host "    -modi    dedicated GPU: Complementary shaders (HIGH), -Xmx8G"
     Write-Host "    -Manifest PATH-OR-URL  override the generated mods.generated.tsv source (testing/local)"
@@ -306,7 +306,7 @@ if ($Tier -eq "dalit") {
     $T_Mipmap = 0;          $T_BiomeBlend = 0;   $T_MaxFps = 60
     $T_EntityShadows = "false"; $T_Ao = "false"; $T_EntityDistScale = "0.5"
     $T_Xmx = "3G"
-    $T_CompProfile = ""
+    $T_CompProfile = "POTATO"
     $T_SoundPhysics = "false"
     $T_Lambdyn = "fastest"
     $T_Continuity = $false
@@ -425,6 +425,18 @@ foreach ($ip in (@($InactiveMods | ForEach-Object { $_.Prefix }) | Select-Object
             Write-Log "Tier '$Tier': removing stale mod for prefix '$ip': $($_.Name)"
             Remove-Item -Force $_.FullName
         }
+    }
+}
+# 3. Any jar matching an ACTIVE prefix whose filename is not the active one is a
+# superseded build of a mod we do install -- the pre-Iris Sodium left by a dalit
+# install from before every tier had shaders, or any mod whose pin was bumped. It is
+# removed here rather than left for H.1, which would abort the whole install on a
+# duplicate a friend has no way to resolve by hand.
+foreach ($row in ($ActiveRows | Where-Object { $_.Dest -eq "mods" })) {
+    Get-ChildItem -Path $ModsDir -Filter "$($row.Prefix)*.jar" -File -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.Name -eq $row.File) { return }
+        Write-Log "Tier '$Tier': removing superseded build for prefix '$($row.Prefix)': $($_.Name)"
+        Remove-Item -Force $_.FullName
     }
 }
 
@@ -687,9 +699,9 @@ try {
     # master enable field (a pure optimizer, active once installed), so neither needs
     # a written config -- installing the jar is "on".
 
-    # Iris (pandit/modi only) -- point it at the shaderpack, enable it, and set the
-    # tier's Complementary profile. Iris stores the selected pack in
-    # config\iris.properties (java.util.Properties) and per-shaderpack options --
+    # Iris (every tier the manifest gives a shaderpack row) -- point it at the pack,
+    # enable it, and set the tier's Complementary profile. Iris stores the selected pack
+    # in config\iris.properties (java.util.Properties) and per-shaderpack options --
     # including the profile -- in shaderpacks\<shaderPack>.txt, where <shaderPack> is
     # exactly the iris.properties "shaderPack" value (the .zip name for a zip pack).
     # Confirmed against the Iris jar: Iris.class resolves
@@ -708,8 +720,8 @@ try {
     }
 
     # --- H: verify all mod jars ---
-    # dalit: 43 active jars; pandit/modi: 44 active jars (Sodium swapped to 0.8.7, plus
-    # Iris). The active jar count is derived from the manifest for this tier. Non-mod
+    # Every tier installs the same 44 active jars -- all three now run Iris + Sodium 0.8.7.
+    # The active jar count is derived from the manifest for this tier. Non-mod
     # files (the resourcepack, and the shaderpack for shader tiers) live in
     # resourcepacks\ and shaderpacks\ and are verified separately in H.4 below.
     Write-Log "[8/8] Verifying all $ExpectedJarCount mod jars by SHA-256..."
@@ -766,9 +778,9 @@ try {
 
     # --- H.2: remove our own tier-swap artifacts before the manifest check. A jar whose
     # filename is named by the FULL manifest (any tier) but is NOT active for this tier
-    # (e.g. the base Sodium build left by a dalit->pandit switch) is our own artifact and
-    # is safe to delete. This must not touch any file the manifest does not name; H.1
-    # above already aborted on any duplicate a user introduced by hand. ---
+    # (e.g. a build left behind by a tier switch) is our own artifact and is safe to
+    # delete. This must not touch any file the manifest does not name; H.1 above
+    # already aborted on any duplicate a user introduced by hand. ---
     Get-ChildItem -Path $ModsDir -Filter "*.jar" -File -ErrorAction SilentlyContinue | ForEach-Object {
         $bn = $_.Name
         if (($AllModsFiles -contains $bn) -and ($ActiveModsFiles -notcontains $bn)) {
@@ -849,7 +861,7 @@ try {
     if ($HasShaders) {
         Write-Log "Tier applied: $Tier (RAM -Xmx$T_Xmx; shaders ON: Iris + Sodium 0.8.7 + Complementary $T_CompProfile)."
     } else {
-        Write-Log "Tier applied: $Tier (RAM -Xmx$T_Xmx; no shaders, Sodium 0.8.14-beta.2)."
+        Write-Log "Tier applied: $Tier (RAM -Xmx$T_Xmx; no shaders -- no shaderpack row is active for this tier)."
     }
     Write-Log "Reminder: do not add OptiFine - Sodium is included."
 

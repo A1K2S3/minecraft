@@ -101,9 +101,12 @@ pin (a version *number*), `client_version` is the client pin (a version *ID*). T
 describe the same build for a `both` mod.
 
 `slug` may repeat **only** when every entry sharing it is client-side with non-overlapping
-`client_tiers`. That is how `sodium` ships one build to `dalit` and the build Iris pins to
-the shader tiers. `scripts/generate` rejects any other duplicate and rejects two builds of
-one mod reaching a single tier.
+`client_tiers` — one build to one set of tiers, a different build to the rest. (`sodium` used
+to be split that way, before every tier got shaders and Iris' pinned 0.8.7 became the only
+build shipped.) `scripts/generate` rejects any other duplicate and rejects two builds of one
+mod reaching a single tier. An empty `client_tiers` list is **not** a way to park an entry on
+no tier: `""` is not a tier name and `generate` fails on it. Delete the entry instead — the
+installers sweep a superseded build off a friend's disk by prefix (Tiers, below).
 
 ### 3. Regenerate
 
@@ -225,6 +228,20 @@ exotic — no `jq`, no `python3`. Keep it that way.
 and mutually exclusive. They set render distances, RAM, and per-mod configs. Whether a tier
 gets shaders is **derived from the manifest** (a tier has shaders iff some active row has
 `dest` = `shaderpacks`), not hardcoded — do not reintroduce a per-tier shader flag.
+
+All three tiers now run shaders: Iris + Sodium 0.8.7 + Complementary Unbound, at profile
+`POTATO` (dalit) / `MEDIUM` (pandit) / `HIGH` (modi). Iris hard-pins Sodium 0.8.7, so that
+is the only Sodium build in `mods.json`. dalit keeps every other low-end setting it had —
+render distance 5, `-Xmx3G`, sound physics off, dynamic lights off, no connected textures.
+The no-shaders branches in both installers stay: `HAS_SHADERS` is manifest-derived, so a
+future tier that drops the shaderpack row still installs correctly.
+
+Before a friend's mods/ is touched, the installers reconcile it in three passes: remove an
+inactive row's exact file, sweep a prefix owned only by inactive rows, then remove any jar
+matching an **active** prefix whose filename is not the active one. That third pass is what
+takes a superseded build off disk — the pre-Iris Sodium a dalit friend still has, or any mod
+whose pin was bumped. Without it the duplicate gate (H.1) aborts the install instead, and a
+friend cannot be expected to delete the right jar by hand.
 
 ## Changing installer config values
 
