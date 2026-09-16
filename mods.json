@@ -360,20 +360,20 @@
     {
       "name": "Architectury API",
       "slug": "architectury-api",
-      "side": "client",
+      "side": "both",
       "type": "mod",
       "version": null,
-      "notes": "",
+      "notes": "Required by Enderite Mod, which is client_and_server -- so this library has to be on both sides, not client-only.",
       "client_version": "uNdfrcQ8",
       "client_tiers": null
     },
     {
       "name": "Cloth Config API",
       "slug": "cloth-config",
-      "side": "client",
+      "side": "both",
       "type": "mod",
       "version": null,
-      "notes": "",
+      "notes": "Required by Enderite Mod, which is client_and_server -- so this library has to be on both sides, not client-only.",
       "client_version": "xuX40TN5",
       "client_tiers": null
     },
@@ -555,6 +555,16 @@
       "version": null,
       "notes": "",
       "client_version": "tRdGJKGE",
+      "client_tiers": null
+    },
+    {
+      "name": "Enderite Mod",
+      "slug": "enderite-mod",
+      "side": "both",
+      "type": "mod",
+      "version": "1.8.2",
+      "notes": "Adds Enderite ore/tools/armour above Netherite. A content mod, so both sides pin the same build. Requires Fabric API, Architectury API (>=19.0.1) and Cloth Config (>=21.11.151); the latter two were client-only before this entry.",
+      "client_version": "VJqLE3Ux",
       "client_tiers": null
     }
   ]
