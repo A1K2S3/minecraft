@@ -6,16 +6,16 @@ The mod list is **not** written here — it is generated into `mods.generated.en
 
 ## Layout
 
-| File | Committed | What it is |
-| --- | --- | --- |
-| `docker-compose.yml` | yes | The server and the backup sidecar, exactly as they run. Contains no secrets. |
-| `bootstrap` | yes | Restore the world from Backblaze B2 if this machine has none, then start. Run this first on a fresh machine. |
-| `restart` | yes | Save the world, recreate the containers, report. The deploy step. |
-| `.env.example` | yes | Template for `.env`. |
-| `.env` | **no** — gitignored | `RCON_PASSWORD` plus the four Backblaze B2 backup values. This repo is public; the real values live only here and on the VM. |
-| `mods.generated.env` | yes | `MODRINTH_PROJECTS=...`, generated. Never hand-edit. |
-| `data/` | no — gitignored | World, logs, and the mods the container downloads. |
-| `.restore-stage/` | no — gitignored | Scratch space `bootstrap` downloads a snapshot into. Deleted on exit. |
+| File                 | Committed           | What it is                                                                                                                   |
+| -------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `docker-compose.yml` | yes                 | The server and the backup sidecar, exactly as they run. Contains no secrets.                                                 |
+| `bootstrap`          | yes                 | Restore the world from Backblaze B2 if this machine has none, then start. Run this first on a fresh machine.                 |
+| `restart`            | yes                 | Save the world, recreate the containers, report. The deploy step.                                                            |
+| `.env.example`       | yes                 | Template for `.env`.                                                                                                         |
+| `.env`               | **no** — gitignored | `RCON_PASSWORD` plus the four Backblaze B2 backup values. This repo is public; the real values live only here and on the VM. |
+| `mods.generated.env` | yes                 | `MODRINTH_PROJECTS=...`, generated. Never hand-edit.                                                                         |
+| `data/`              | no — gitignored     | World, logs, and the mods the container downloads.                                                                           |
+| `.restore-stage/`    | no — gitignored     | Scratch space `bootstrap` downloads a snapshot into. Deleted on exit.                                                        |
 
 `docker-compose.yml` pulls both env files:
 
@@ -31,7 +31,7 @@ the mod list is only ever the generated file.
 ## First run on a fresh VM
 
 ```sh
-git clone https://github.com/Adarsh077/minecraft.git /root/mc-repo
+git clone https://github.com/A1K2S3/minecraft.git /root/mc-repo
 cd /root/mc-repo/server
 cp .env.example .env
 $EDITOR .env          # RCON_PASSWORD + the four Backblaze B2 values
@@ -40,7 +40,7 @@ $EDITOR .env          # RCON_PASSWORD + the four Backblaze B2 values
 
 **Use `bootstrap`, not `docker compose up -d`, the first time.** It asks the B2
 repository named in `.env` whether a world is already backed up there. If one is, it
-downloads it into `data/` *before* the server starts, so the container boots the real
+downloads it into `data/` _before_ the server starts, so the container boots the real
 world. If the repository is empty — a genuinely new server — it just starts and the world
 generates.
 
@@ -122,14 +122,14 @@ Automated, off-box, and hands-off. The `backup` service in `docker-compose.yml` 
 straight to **Backblaze B2** through [restic](https://restic.net/). Nothing is written to
 this VM's disk, so a dead disk does not take the backup with it.
 
-| | |
-| --- | --- |
-| When | **00:00 UTC daily** (`CRON_SCHEDULE: "0 0 * * *"` — always UTC, `TZ` only affects log timestamps) |
-| Retention | **one snapshot** (`PRUNE_RESTIC_RETENTION: "--keep-last 1"`) |
-| Where | The restic repository in `RESTIC_REPOSITORY`, on B2's S3-compatible endpoint |
-| What | All of `/data` except `*.jar`, `cache`, `logs`, `*.tmp`, `libraries`, `versions`, `.fabric`, `downloads`, `world.fresh-bak` — everything excluded is re-downloaded on boot |
-| Consistency | The sidecar issues `save-all` over RCON and syncs the filesystem before reading, so the snapshot is not a torn mid-write copy |
-| Mount | `./data:/data:**ro**` — the sidecar can never write the world |
+|             |                                                                                                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| When        | **00:00 UTC daily** (`CRON_SCHEDULE: "0 0 * * *"` — always UTC, `TZ` only affects log timestamps)                                                                          |
+| Retention   | **one snapshot** (`PRUNE_RESTIC_RETENTION: "--keep-last 1"`)                                                                                                               |
+| Where       | The restic repository in `RESTIC_REPOSITORY`, on B2's S3-compatible endpoint                                                                                               |
+| What        | All of `/data` except `*.jar`, `cache`, `logs`, `*.tmp`, `libraries`, `versions`, `.fabric`, `downloads`, `world.fresh-bak` — everything excluded is re-downloaded on boot |
+| Consistency | The sidecar issues `save-all` over RCON and syncs the filesystem before reading, so the snapshot is not a torn mid-write copy                                              |
+| Mount       | `./data:/data:**ro**` — the sidecar can never write the world                                                                                                              |
 
 It does **not** back up on container start (`BACKUP_ON_STARTUP: "false"`, against the
 image's default of `true`). Two reasons:
@@ -137,7 +137,7 @@ image's default of `true`). Two reasons:
 - `restart` recreates the containers on every deploy, so an on-start backup would fire
   whenever anyone deploys — and since retention is one snapshot, each run deletes the
   previous one. The backup schedule would belong to whoever last ran a deploy.
-- **The case that actually hurts:** if the stack ever comes up *without the real world* —
+- **The case that actually hurts:** if the stack ever comes up _without the real world_ —
   `docker compose up -d` on a fresh box instead of `./bootstrap`, or a wiped `data/` —
   the server generates an empty world, and an on-start backup would snapshot that and
   prune the only good snapshot. One wrong command and the backup is gone. With backups on
@@ -145,8 +145,8 @@ image's default of `true`). Two reasons:
   chance to notice.
 
 (A snapshot taken right after a deploy is not itself bad — `restart` flushes the world
-before stopping, so it captures the pre-deploy state. The problem is *when* it fires and
-*what it might capture*, not the deploy.)
+before stopping, so it captures the pre-deploy state. The problem is _when_ it fires and
+_what it might capture_, not the deploy.)
 
 ### Two things to know about a one-snapshot retention
 
@@ -163,7 +163,7 @@ before stopping, so it captures the pre-deploy state. The problem is *when* it f
 
 **It does not re-upload the world every night.** restic splits files into
 content-defined chunks and stores each chunk once, so a nightly run uploads only chunks
-that are genuinely new. It also picks the previous snapshot as a *parent* and skips any
+that are genuinely new. It also picks the previous snapshot as a _parent_ and skips any
 file whose size and mtime are unchanged — those are not even re-read.
 
 What that means in practice:
@@ -187,12 +187,12 @@ that window. Another reason to keep the backup lean.
 
 If a run is slower than you want, the knobs are, in order of effect:
 
-| Knob | Effect |
-| --- | --- |
-| `EXCLUDES` | The cheapest win: anything the container can regenerate should be in here, not in B2. |
-| `RESTIC_LIMIT_UPLOAD` | KiB/s ceiling. Does not speed a run up — it stops the run saturating your uplink. |
-| `PAUSE_IF_NO_PLAYERS` | Skips backups while the server is empty. Trades freshness for load. |
-| `--keep-last N` | More snapshots cost little extra space (dedup) and nothing in run time. |
+| Knob                  | Effect                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| `EXCLUDES`            | The cheapest win: anything the container can regenerate should be in here, not in B2. |
+| `RESTIC_LIMIT_UPLOAD` | KiB/s ceiling. Does not speed a run up — it stops the run saturating your uplink.     |
+| `PAUSE_IF_NO_PLAYERS` | Skips backups while the server is empty. Trades freshness for load.                   |
+| `--keep-last N`       | More snapshots cost little extra space (dedup) and nothing in run time.               |
 
 ### Check on it
 

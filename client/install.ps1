@@ -34,7 +34,7 @@ $ForcedTunnelsJson = '["minecraft.dekhlo.to"]'
 # script, else a fetch from the raw GitHub URL. The mods table, shader stack,
 # resourcepack, server-only prefixes, and duplicate-detection prefixes are all derived
 # from these files, not hardcoded here.
-$RawBaseUrl = "https://raw.githubusercontent.com/Adarsh077/minecraft/main/client"
+$RawBaseUrl = "https://raw.githubusercontent.com/A1K2S3/minecraft/main/client"
 
 function Write-Log($msg) {
     Write-Host $msg

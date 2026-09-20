@@ -82,22 +82,22 @@ Append to the `mods` array:
 }
 ```
 
-| Field | Meaning |
-| --- | --- |
-| `name` | Human-readable title. |
-| `slug` | Modrinth project slug. |
-| `side` | `server`, `client`, or `both`. **This alone decides where the mod lands.** A `server` mod never reaches a client and is actively purged from a friend's `mods/`. A `both` mod must exist on both sides at the same version or clients are rejected at login. |
-| `type` | `mod`, `datapack`, `resourcepack`, or `shaderpack`. Decides the client install directory (`mods/`, `resourcepacks/`, `shaderpacks/`) and whether the server token gets a `datapack:` prefix. |
-| `version` | The **server** pin, written exactly as `MODRINTH_PROJECTS` needs it (usually the version *number*, e.g. `21.11.9+fabric-1.21.11`). `null` lets the server resolve the newest build. |
-| `notes` | Free text. Record anything non-obvious — why a version is pinned, what depends on it. |
-| `client_version` | *client/both only.* The Modrinth **version ID** the installers pin, so every friend gets byte-identical jars. `null` resolves the newest at generate time. |
-| `client_tiers` | *client/both only.* `null` for every tier, or a subset like `["pandit", "modi"]`. |
+| Field            | Meaning                                                                                                                                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`           | Human-readable title.                                                                                                                                                                                                                                        |
+| `slug`           | Modrinth project slug.                                                                                                                                                                                                                                       |
+| `side`           | `server`, `client`, or `both`. **This alone decides where the mod lands.** A `server` mod never reaches a client and is actively purged from a friend's `mods/`. A `both` mod must exist on both sides at the same version or clients are rejected at login. |
+| `type`           | `mod`, `datapack`, `resourcepack`, or `shaderpack`. Decides the client install directory (`mods/`, `resourcepacks/`, `shaderpacks/`) and whether the server token gets a `datapack:` prefix.                                                                 |
+| `version`        | The **server** pin, written exactly as `MODRINTH_PROJECTS` needs it (usually the version _number_, e.g. `21.11.9+fabric-1.21.11`). `null` lets the server resolve the newest build.                                                                          |
+| `notes`          | Free text. Record anything non-obvious — why a version is pinned, what depends on it.                                                                                                                                                                        |
+| `client_version` | _client/both only._ The Modrinth **version ID** the installers pin, so every friend gets byte-identical jars. `null` resolves the newest at generate time.                                                                                                   |
+| `client_tiers`   | _client/both only._ `null` for every tier, or a subset like `["pandit", "modi"]`.                                                                                                                                                                            |
 
 Ordering matters for the server entries: `MODRINTH_PROJECTS` is emitted in array order, so
 appending is safe but reordering produces a needless diff.
 
 Two fields exist for versions because they hold different things: `version` is the server
-pin (a version *number*), `client_version` is the client pin (a version *ID*). They must
+pin (a version _number_), `client_version` is the client pin (a version _ID_). They must
 describe the same build for a `both` mod.
 
 `slug` may repeat **only** when every entry sharing it is client-side with non-overlapping
@@ -158,11 +158,11 @@ cd /root/mc-repo && git pull
 stopping, so nothing is lost, then recreates the containers so the new
 `mods.generated.env` takes effect:
 
-| Flag | Effect |
-| --- | --- |
-| *(none)* | warn players, `save-all flush`, `compose down`, `compose up -d`, print `ps` |
-| `--logs` | the above, then follow the container log |
-| `--force` | stop even if the pre-stop save could not be confirmed |
+| Flag      | Effect                                                                      |
+| --------- | --------------------------------------------------------------------------- |
+| _(none)_  | warn players, `save-all flush`, `compose down`, `compose up -d`, print `ps` |
+| `--logs`  | the above, then follow the container log                                    |
+| `--force` | stop even if the pre-stop save could not be confirmed                       |
 
 It refuses to run without `./server/.env` (an empty `RCON_PASSWORD` would bring the server
 up with RCON effectively open), without `mods.generated.env`, or with any of the four
@@ -189,7 +189,7 @@ They resolve `mods.generated.tsv` and `purge.generated.txt` in this order:
 
 1. `--manifest` / `-Manifest` override (local path or URL) — for testing.
 2. A copy sitting next to the script (a cloned checkout).
-3. A fetch from `https://raw.githubusercontent.com/Adarsh077/minecraft/main/client/`.
+3. A fetch from `https://raw.githubusercontent.com/A1K2S3/minecraft/main/client/`.
 
 **Consequence: a client change is only live once it is pushed to `main`.** Until then, path
 3 returns 404 and the installer aborts loudly rather than installing a partial pack.
@@ -210,7 +210,7 @@ Two consequences worth carrying in your head:
 
 - **The repo plus four values in `.env` is the entire recovery kit.** `server/bootstrap`
   restores the world from B2 when a machine has none, so nothing on the VM outside
-  `.env` is load-bearing. Anything you add to the server that lives *only* on the VM
+  `.env` is load-bearing. Anything you add to the server that lives _only_ on the VM
   breaks that property — put it in the repo instead.
 - **One snapshot means no history.** Damage not noticed within 24 hours is permanent.
   If a session is about to do something risky to the world (a biome mod, a version bump,

@@ -29,7 +29,7 @@ import urllib.request
 from pathlib import Path
 
 API_BASE = "https://api.modrinth.com/v2"
-USER_AGENT = "Adarsh077/minecraft (scripts/generate)"
+USER_AGENT = "A1K2S3/minecraft (scripts/generate)"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODS_JSON = REPO_ROOT / "mods.json"

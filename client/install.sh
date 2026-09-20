@@ -19,7 +19,7 @@ FORCED_TUNNELS_JSON='["minecraft.dekhlo.to"]'
 # --manifest override first, else a copy sitting next to the script, else a fetch from
 # the raw GitHub URL. The mods table, shader stack, resourcepack, server-only prefixes,
 # and duplicate-detection prefixes are all derived from these files, not hardcoded here.
-RAW_BASE_URL="https://raw.githubusercontent.com/Adarsh077/minecraft/main/client"
+RAW_BASE_URL="https://raw.githubusercontent.com/A1K2S3/minecraft/main/client"
 
 TARGET_DIR=""
 TMPDIR_CREATED=""
