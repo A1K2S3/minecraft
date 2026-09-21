@@ -27,7 +27,7 @@ services:
       SIMULATION_DISTANCE: "6"
       USE_AIKAR_FLAGS: "true"
       ENABLE_RCON: "true"
-      OPS: "Guardian"
+      OPS: "Guardian,chutkabhavandar"
       OP_PERMISSION_LEVEL: "4"
       RCON_PASSWORD: "${RCON_PASSWORD}"
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
