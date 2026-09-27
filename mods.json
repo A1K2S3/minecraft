@@ -566,6 +566,14 @@
       "notes": "Adds Enderite ore/tools/armour above Netherite. A content mod, so both sides pin the same build. Requires Fabric API, Architectury API (>=19.0.1) and Cloth Config (>=21.11.151); the latter two were client-only before this entry.",
       "client_version": "VJqLE3Ux",
       "client_tiers": null
+    },
+    {
+      "name": "Grind Enchantments",
+      "slug": "grind-enchantments",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": "Moves enchantments to books / disenchants items via the grindstone. Server-side only (client optional). The one Fabric 1.21.11 build is 4.1.0+1.21.11-pre2, a release that declares 1.21.11. Requires Fabric API."
     }
   ]
 }
