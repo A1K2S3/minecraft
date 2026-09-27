@@ -25,6 +25,7 @@ services:
       MAX_TICK_TIME: "-1"
       VIEW_DISTANCE: "8"
       SIMULATION_DISTANCE: "6"
+      PAUSE_WHEN_EMPTY_SECONDS: "0"
       USE_AIKAR_FLAGS: "true"
       ENABLE_RCON: "true"
       OPS: "Guardian"
