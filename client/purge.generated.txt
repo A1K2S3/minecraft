@@ -11,3 +11,4 @@ c2me-fabric-mc1.21.11-
 lithostitched-
 Terralith_
 grind-enchantments-
+skinrestorer-

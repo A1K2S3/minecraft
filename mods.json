@@ -574,6 +574,34 @@
       "type": "mod",
       "version": null,
       "notes": "Moves enchantments to books / disenchants items via the grindstone. Server-side only (client optional). The one Fabric 1.21.11 build is 4.1.0+1.21.11-pre2, a release that declares 1.21.11. Requires Fabric API."
+    },
+    {
+      "name": "SkinRestorer",
+      "slug": "skinrestorer",
+      "side": "server",
+      "type": "mod",
+      "version": null,
+      "notes": "Lets players set/restore skins server-side (/skin). Server-only (client unsupported). Fabric API is optional."
+    },
+    {
+      "name": "Eunomia",
+      "slug": "eunomia",
+      "side": "both",
+      "type": "mod",
+      "version": "fab-mc-1.21.11-0.3.14",
+      "notes": "Library required by Armor Hider, so it has to be on both sides with it.",
+      "client_version": "ddaTv326",
+      "client_tiers": null
+    },
+    {
+      "name": "Armor Hider",
+      "slug": "zannaghs-armor-hider",
+      "side": "both",
+      "type": "mod",
+      "version": "fab-mc-1.21.11-0.14.4",
+      "notes": "Per-slot armour opacity/hiding. Client-required; also on the server so hidden-armour settings sync to other players. Requires Eunomia.",
+      "client_version": "fih8h6pP",
+      "client_tiers": null
     }
   ]
 }
