@@ -602,6 +602,16 @@
       "notes": "Per-slot armour opacity/hiding. Client-required; also on the server so hidden-armour settings sync to other players. Requires Eunomia.",
       "client_version": "fih8h6pP",
       "client_tiers": null
+    },
+    {
+      "name": "Create: Ultimate Factory",
+      "slug": "create-ultimate-factory",
+      "side": "both",
+      "type": "mod",
+      "version": "2.2.4",
+      "notes": "Create addon; requires Create Fly (Modrinth dependency). Server and client pinned to the same build (2.2.4 = dPv5H31a).",
+      "client_version": "dPv5H31a",
+      "client_tiers": null
     }
   ]
 }
