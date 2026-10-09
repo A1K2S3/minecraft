@@ -103,7 +103,7 @@ done
 if [ -n "$MISSING" ]; then
   die "These Backblaze B2 values are empty in ./.env:$MISSING
 Fill them in (see .env.example for where each one comes from) and retry. Without
-them there is no off-box backup, and no world to restore on a fresh machine."
+them there is no world to restore on a fresh machine."
 fi
 
 log "      docker, compose, .env and mods.generated.env all present."
@@ -166,7 +166,7 @@ else
     case "$SNAP_OUT" in
       *"unable to open config file"*|*"repository does not exist"*|*"repository not found"*)
         log "      No restic repository in B2 yet -- treating this as a brand new server."
-        log "      The backup sidecar will create the repository on its first run."
+        log "      (Automatic backups are currently disabled -- nothing will create one.)"
         ;;
       *)
         printf 'ERROR: could not read the B2 restic repository (exit %s):\n' "$SNAP_RC" >&2
@@ -196,7 +196,7 @@ bucket is empty, start the stack directly with: docker compose up -d"
       "$RESTIC_IMAGE" restore latest --target /restore \
       || die "restic restore failed. ./data was not touched."
 
-    # The sidecar backs up with `cd /data && restic backup .`, so restic records
+    # The (now removed) backup sidecar backed up with `cd /data && restic backup .`, so restic records
     # the absolute path and the restore lands at <target>/data/... Older or
     # hand-made snapshots may sit at the target root instead -- accept both.
     if [ -d "./$STAGE_DIR/data" ]; then
@@ -230,16 +230,17 @@ fi
 # --- step 5: start ----------------------------------------------------------------
 log "[5/5] Starting containers (compose up -d)..."
 compose up -d
-compose ps
+compose ps -a
 
 log ""
-log "The mc container downloads every mod in mods.generated.env on first boot; that"
-log "takes a few minutes. The backup sidecar runs at 00:00 UTC daily and keeps one"
-log "snapshot in B2."
+log "lazymc puts mc to sleep right away and starts it when the first player joins."
+log "That first start downloads every mod in mods.generated.env and takes a few"
+log "minutes; the joining player is told the server is starting."
+log "Automatic backups are currently disabled -- nothing is uploaded to B2."
 
 if [ "$FOLLOW_LOGS" = "1" ]; then
-  log "Following the server log (Ctrl-C to stop; the server keeps running)..."
-  compose logs -f mc
+  log "Following the lazymc and server logs (Ctrl-C to stop; the server keeps running)..."
+  compose logs -f lazymc mc
 else
-  log "Follow the log with: docker compose logs -f mc    (or re-run this script with --logs)"
+  log "Follow the logs with: docker compose logs -f lazymc mc    (or re-run this script with --logs)"
 fi

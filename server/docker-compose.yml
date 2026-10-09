@@ -1,14 +1,59 @@
+# Sleep when empty: players connect to lazymc, not to mc. lazymc starts the mc
+# container when someone joins and stops it (docker stop, so a clean save) once
+# nobody has been online for lazymc.time.sleep_after seconds -- the JVM exits
+# and its RAM is freed. While mc is down, lazymc answers the server list itself
+# and holds a joining client until the server is up.
 services:
+  lazymc:
+    image: ghcr.io/joesturge/lazymc-docker-proxy:latest
+    container_name: lazymc
+    restart: unless-stopped
+    ports:
+      - "25565:25565"
+    volumes:
+      # lazymc reads server.properties from here. Read-only.
+      - ./data:/server:ro
+      # How it starts and stops the mc container. This is root on the host --
+      # the price of an on-demand server.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      mc-net:
+        ipv4_address: 172.29.0.2
+
   mc:
     image: itzg/minecraft-server
     container_name: mc
     tty: true
     stdin_open: true
-    ports:
-      - "25565:25565"
+    # No published port: all traffic goes through lazymc.
     volumes:
       - ./data:/data
-    restart: unless-stopped
+    # lazymc owns this container's lifecycle. Any restart policy would bring it
+    # straight back up every time lazymc puts it to sleep.
+    restart: "no"
+    # lazymc stops the server with `docker stop`. The image turns SIGTERM into a
+    # clean `stop` and allows it 60s (STOP_DURATION); Docker's default 10s grace
+    # would SIGKILL it mid-save.
+    stop_grace_period: 90s
+    # A static address so lazymc can reach mc while mc is stopped and has no DNS
+    # entry. It must match lazymc.server.address below.
+    networks:
+      mc-net:
+        ipv4_address: 172.29.0.3
+    labels:
+      - lazymc.enabled=true
+      - lazymc.group=mc
+      - lazymc.server.address=172.29.0.3:25565
+      # Sleep 10 minutes after the last player leaves, so a quick reconnect
+      # does not pay for a cold boot.
+      - lazymc.time.sleep_after=600
+      # A cold boot of this modpack (longer on a deploy, which re-downloads
+      # mods) can outlast lazymc's 300s default.
+      - lazymc.server.start_timeout=600
+      # What the server list shows while mc is asleep. Protocol 774 is 1.21.11;
+      # without these the list reports a version mismatch.
+      - lazymc.public.version=1.21.11
+      - lazymc.public.protocol=774
     # ./.env             -- secrets, NOT committed (see .env.example)
     # ./mods.generated.env -- MODRINTH_PROJECTS, generated from ../mods.json by scripts/generate
     env_file:
@@ -25,85 +70,24 @@ services:
       MAX_TICK_TIME: "-1"
       VIEW_DISTANCE: "8"
       SIMULATION_DISTANCE: "6"
-      PAUSE_WHEN_EMPTY_SECONDS: "0"
       USE_AIKAR_FLAGS: "true"
       ENABLE_RCON: "true"
-      OPS: "Guardian,Chaukidaar,Sid19s"
+      # ":offline" makes the image derive each op's offline-mode UUID locally
+      # instead of looking the name up on Playerdb/Mojang. With ONLINE_MODE false
+      # that is the UUID players actually join with, and the lookup fails outright
+      # for names with no Mojang account (Sid19s), which aborts startup.
+      # Add new ops the same way: Name:offline.
+      OPS: "Guardian:offline,Chaukidaar:offline,Sid19s:offline"
       OP_PERMISSION_LEVEL: "4"
       RCON_PASSWORD: "${RCON_PASSWORD}"
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: "beta"
 
-  # Off-box world backups. Uploads to Backblaze B2 through restic; nothing is
-  # ever written to this VM's disk, so a dead disk does not take the backup
-  # with it. Credentials come from ./.env -- see .env.example and
-  # server/README.md ("Backups").
-  #
-  # The world is restored from this same B2 repository by ./bootstrap on a
-  # fresh machine.
-  backup:
-    image: itzg/mc-backup
-    container_name: mc-backup
-    depends_on:
-      - mc
-    restart: unless-stopped
-    # RESTIC_REPOSITORY, RESTIC_PASSWORD, AWS_ACCESS_KEY_ID and
-    # AWS_SECRET_ACCESS_KEY are read straight out of ./.env, so no credential
-    # is ever named in this file.
-    env_file:
-      - ./.env
-    environment:
-      # 00:00 UTC daily. CRON_SCHEDULE is always interpreted as UTC (TZ below
-      # only affects log timestamps) and it overrides BACKUP_INTERVAL entirely.
-      CRON_SCHEDULE: "0 0 * * *"
-      TZ: "UTC"
-      # Do NOT back up on container start (the image defaults to true).
-      #
-      # ./restart recreates the containers on every deploy, so an on-start
-      # backup fires whenever anyone deploys -- and because retention is one
-      # snapshot, each one deletes the previous. That hands the backup schedule
-      # to whoever last ran a deploy.
-      #
-      # The case that actually hurts: if the stack ever comes up WITHOUT the
-      # real world -- `docker compose up -d` on a fresh box instead of
-      # ./bootstrap, or a wiped data/ -- the server generates an empty world
-      # and an on-start backup would snapshot that and prune the only good
-      # snapshot. One wrong command and the backup is gone.
-      #
-      # Secondary reason: at startup mc may still be downloading mods, so the
-      # pre-backup save-all over RCON can fail.
-      BACKUP_ON_STARTUP: "false"
-      BACKUP_METHOD: "restic"
-      # Keep exactly one snapshot -- restic forget runs with this after each
-      # backup. Widen it here (e.g. "--keep-last 7") to keep more history.
-      PRUNE_RESTIC_RETENTION: "--keep-last 1"
-      BACKUP_NAME: "world"
-      RESTIC_ADDITIONAL_TAGS: "mc_backups"
-      # Everything excluded here is re-downloaded or regenerated by the mc
-      # container on boot, so it is pure upload cost. The world is not here.
-      EXCLUDES: "*.jar,cache,logs,*.tmp,libraries,versions,.fabric,downloads,world.fresh-bak"
-      # The sidecar flushes the world over RCON before reading it, then syncs
-      # the filesystem, so the snapshot is not a torn mid-write copy.
-      ENABLE_SAVE_ALL: "true"
-      ENABLE_SYNC: "true"
-      RCON_HOST: "mc"
-      RCON_PORT: "25575"
-      RCON_PASSWORD: "${RCON_PASSWORD}"
-      # First boot downloads every mod, which can outlast the default 5x10s.
-      RCON_RETRIES: "10"
-      RCON_RETRY_INTERVAL: "30s"
-      # restic caches the repository index and snapshot metadata locally and
-      # needs it to work out what is already stored. Its default location is
-      # inside the container, which ./restart destroys on every deploy --
-      # forcing restic to re-download the index from B2 before each backup.
-      # Point it at a named volume so the cache survives.
-      RESTIC_CACHE_DIR: "/restic-cache"
-    volumes:
-      # Read-only: this container must never be able to write the world.
-      - ./data:/data:ro
-      - restic-cache:/restic-cache
-
-volumes:
-  # Disposable -- restic rebuilds it from the repository if it is ever lost.
-  # `docker compose down -v` will remove it; a plain `down` keeps it.
-  restic-cache:
+networks:
+  # Outside Docker's default 172.17.0.0/16 so the static addresses above stay
+  # stable across container restarts.
+  mc-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24

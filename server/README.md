@@ -8,11 +8,11 @@ The mod list is **not** written here — it is generated into `mods.generated.en
 
 | File                 | Committed           | What it is                                                                                                                   |
 | -------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `docker-compose.yml` | yes                 | The server and the backup sidecar, exactly as they run. Contains no secrets.                                                 |
+| `docker-compose.yml` | yes                 | The server and the lazymc proxy that sleeps/wakes it, exactly as they run. Contains no secrets.                              |
 | `bootstrap`          | yes                 | Restore the world from Backblaze B2 if this machine has none, then start. Run this first on a fresh machine.                 |
 | `restart`            | yes                 | Save the world, recreate the containers, report. The deploy step.                                                            |
 | `.env.example`       | yes                 | Template for `.env`.                                                                                                         |
-| `.env`               | **no** — gitignored | `RCON_PASSWORD` plus the four Backblaze B2 backup values. This repo is public; the real values live only here and on the VM. |
+| `.env`               | **no** — gitignored | `RCON_PASSWORD` plus the four Backblaze B2 values `bootstrap` restores from. This repo is public; the real values live only here and on the VM. |
 | `mods.generated.env` | yes                 | `MODRINTH_PROJECTS=...`, generated. Never hand-edit.                                                                         |
 | `data/`              | no — gitignored     | World, logs, and the mods the container downloads.                                                                           |
 | `.restore-stage/`    | no — gitignored     | Scratch space `bootstrap` downloads a snapshot into. Deleted on exit.                                                        |
@@ -44,9 +44,9 @@ downloads it into `data/` _before_ the server starts, so the container boots the
 world. If the repository is empty — a genuinely new server — it just starts and the world
 generates.
 
-That is the whole disaster-recovery story: this repo plus the four B2 values in `.env`
-is enough to rebuild the server from nothing on any machine. Nothing else on the old box
-is load-bearing.
+**Automatic backups are currently disabled** (see Backups below), so B2 holds only the
+last snapshot taken before they were switched off. Anything played since then exists
+only in this VM's `data/`.
 
 `bootstrap` is safe to re-run. Once `data/world` exists it never touches it again, so it
 also works as the everyday "start the stack" command.
@@ -57,6 +57,31 @@ backup. Fix `.env` and re-run.
 
 The container downloads every mod in `MODRINTH_PROJECTS` on boot, plus their required
 dependencies (`MODRINTH_DOWNLOAD_DEPENDENCIES: required`). First boot takes a few minutes.
+Because of lazymc (below), that first boot happens when the first player joins.
+
+## Sleeping when empty
+
+Players connect to **lazymc** on port 25565, never to `mc` directly
+([`lazymc-docker-proxy`](https://github.com/joesturge/lazymc-docker-proxy)). It starts the
+`mc` container when someone joins and `docker stop`s it once nobody has been online for
+10 minutes (`lazymc.time.sleep_after`), so the JVM exits and its 6G of RAM is freed.
+
+- **Joining a sleeping server** wakes it. The client is held, then shown a "server is
+  starting" message if boot takes longer; reconnect after a minute or two.
+- **While asleep** the server list still answers, with a sleeping MOTD.
+- **Nothing ticks while asleep.** Farms, ComputerCraft turtles and chunk loaders stop
+  with the server. A turtle mid-program reboots when the server next starts.
+- `mc` has `restart: "no"` on purpose — lazymc owns its lifecycle. `lazymc` itself has
+  `restart: unless-stopped`, so after a VM reboot the proxy is back and `mc` stays asleep
+  until someone joins.
+- On startup lazymc stops `mc` if it is running, so right after `restart` or `bootstrap`
+  `mc` shows as exited. That is expected.
+- Both containers sit on `mc-net` with static addresses (`172.29.0.2` / `.3`) because
+  lazymc must reach `mc` while it is stopped and has no DNS name.
+- lazymc mounts the Docker socket to start and stop `mc`. That is root-equivalent on the
+  host; the container is the published upstream image.
+
+To force the server up without joining: `docker compose start mc`.
 
 ## Deploying a mod change
 
@@ -108,98 +133,27 @@ rejected at login.
 ./bootstrap                          # restore-if-needed, then start (fresh machine, or just start)
 ./restart                            # save the world, recreate, report (see above)
 ./restart --logs                     # same, then follow the log
-docker compose ps                    # is it up
+docker compose ps -a                 # is it up (mc "exited" = asleep)
 docker compose logs -f mc            # tail the server log
-docker compose logs -f backup        # tail the backup sidecar
-docker compose restart               # restart without re-reading compose changes
+docker compose logs -f lazymc        # sleep / wake events
+docker compose start mc              # wake the server without joining
 docker compose exec mc rcon-cli      # console; reads RCON_PASSWORD from the env
 ```
 
 ## Backups
 
-Automated, off-box, and hands-off. The `backup` service in `docker-compose.yml` is
-[`itzg/mc-backup`](https://github.com/itzg/docker-mc-backup); it uploads the world
-straight to **Backblaze B2** through [restic](https://restic.net/). Nothing is written to
-this VM's disk, so a dead disk does not take the backup with it.
+**Automatic backups are currently disabled.** The `itzg/mc-backup` sidecar that pushed
+the world to Backblaze B2 nightly has been removed from `docker-compose.yml`, to be
+reimplemented later. Until then the world exists only in this VM's `data/`.
 
-|             |                                                                                                                                                                            |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| When        | **00:00 UTC daily** (`CRON_SCHEDULE: "0 0 * * *"` — always UTC, `TZ` only affects log timestamps)                                                                          |
-| Retention   | **one snapshot** (`PRUNE_RESTIC_RETENTION: "--keep-last 1"`)                                                                                                               |
-| Where       | The restic repository in `RESTIC_REPOSITORY`, on B2's S3-compatible endpoint                                                                                               |
-| What        | All of `/data` except `*.jar`, `cache`, `logs`, `*.tmp`, `libraries`, `versions`, `.fabric`, `downloads`, `world.fresh-bak` — everything excluded is re-downloaded on boot |
-| Consistency | The sidecar issues `save-all` over RCON and syncs the filesystem before reading, so the snapshot is not a torn mid-write copy                                              |
-| Mount       | `./data:/data:**ro**` — the sidecar can never write the world                                                                                                              |
+The last snapshot it took is still in the B2 restic repository, and `bootstrap` can still
+restore it — so keep the four B2 values in `.env`, and never lose `RESTIC_PASSWORD`: it
+is the only key to that snapshot.
 
-It does **not** back up on container start (`BACKUP_ON_STARTUP: "false"`, against the
-image's default of `true`). Two reasons:
-
-- `restart` recreates the containers on every deploy, so an on-start backup would fire
-  whenever anyone deploys — and since retention is one snapshot, each run deletes the
-  previous one. The backup schedule would belong to whoever last ran a deploy.
-- **The case that actually hurts:** if the stack ever comes up _without the real world_ —
-  `docker compose up -d` on a fresh box instead of `./bootstrap`, or a wiped `data/` —
-  the server generates an empty world, and an on-start backup would snapshot that and
-  prune the only good snapshot. One wrong command and the backup is gone. With backups on
-  a schedule instead, a mistake takes up to 24 hours to reach B2, and that gap is the
-  chance to notice.
-
-(A snapshot taken right after a deploy is not itself bad — `restart` flushes the world
-before stopping, so it captures the pre-deploy state. The problem is _when_ it fires and
-_what it might capture_, not the deploy.)
-
-### Two things to know about a one-snapshot retention
-
-1. **There is no history.** The snapshot is replaced every night, so a problem you do
-   not notice within 24 hours — a griefed base, a corrupted region, a mod that ate a
-   chunk — is permanent once the next backup runs. To keep more, widen one value in
-   `docker-compose.yml`: `PRUNE_RESTIC_RETENTION: "--keep-last 7"`. restic deduplicates,
-   so seven snapshots of one world cost far less than seven copies.
-2. **`RESTIC_PASSWORD` is as critical as the world.** restic encrypts the repository
-   with it. There is no reset and no recovery: lose it and the bytes in B2 are
-   permanently unreadable. Keep a copy somewhere that is not this VM.
-
-### Why a run takes as long as it does
-
-**It does not re-upload the world every night.** restic splits files into
-content-defined chunks and stores each chunk once, so a nightly run uploads only chunks
-that are genuinely new. It also picks the previous snapshot as a _parent_ and skips any
-file whose size and mtime are unchanged — those are not even re-read.
-
-What that means in practice:
-
-- **The first run uploads everything.** There is no parent snapshot and no chunk in the
-  repository yet, so the whole world goes up. This is bandwidth-bound: on a home
-  connection a multi-GB world can take a long while. It happens exactly once.
-- **Later runs re-read more than they upload.** Minecraft rewrites entire `.mca` region
-  files when it saves, so their mtimes change and restic must re-read and re-chunk them
-  even where the contents barely moved. Expect disk and CPU time roughly proportional to
-  the world size, but upload far smaller than it. "Slow" and "uploading a lot" are not
-  the same thing here — the log tells you which (`Added to the repository: X MiB`).
-- **The cache matters.** `RESTIC_CACHE_DIR` points at the `restic-cache` named volume
-  precisely so the repository index survives `./restart`. Without it every deploy makes
-  restic re-download the index from B2 before it can start.
-
-**Saving is paused for the duration of a run.** The sidecar flushes and pauses world
-saving around the copy so the snapshot is not torn, which means a long run is a long
-window in which player progress is not being written to disk — a crash during it loses
-that window. Another reason to keep the backup lean.
-
-If a run is slower than you want, the knobs are, in order of effect:
-
-| Knob                  | Effect                                                                                |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| `EXCLUDES`            | The cheapest win: anything the container can regenerate should be in here, not in B2. |
-| `RESTIC_LIMIT_UPLOAD` | KiB/s ceiling. Does not speed a run up — it stops the run saturating your uplink.     |
-| `PAUSE_IF_NO_PLAYERS` | Skips backups while the server is empty. Trades freshness for load.                   |
-| `--keep-last N`       | More snapshots cost little extra space (dedup) and nothing in run time.               |
-
-### Check on it
+To see what is in B2:
 
 ```sh
-docker compose logs --tail=100 backup                  # did last night's run work
-docker compose exec backup backup now                  # run one immediately
-docker run --rm --env-file "$(pwd)/.env" restic/restic:latest snapshots   # what is in B2
+docker run --rm --env-file "$(pwd)/.env" restic/restic:latest snapshots
 ```
 
 ### Restore
@@ -207,7 +161,8 @@ docker run --rm --env-file "$(pwd)/.env" restic/restic:latest snapshots   # what
 On a new machine, or after losing `data/`, that is just the fresh-VM flow above —
 `bootstrap` restores automatically when no local world is present.
 
-To deliberately roll the current world back to the B2 snapshot:
+To deliberately roll the current world back to the B2 snapshot (the last one taken before
+backups were disabled):
 
 ```sh
 docker compose down          # bootstrap refuses to overwrite a running server
