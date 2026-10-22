@@ -618,9 +618,9 @@
       "slug": "sable",
       "side": "both",
       "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.18/sable-fabric-1.21.11-2.0.6%2Bmc1.21.11-port.jar",
-      "sha256": "5c2055555e2c7480604ef4e021d3b2289a5a2cf35b3092785b4e30ebef7f049d",
-      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.18), not on Modrinth. Physics engine for Create Simulated/Aeronautics; needs Forge Config API Port. Tries UDP for ship sync and falls back to TCP, so lazymc (TCP only) is fine.",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.22/sable-fabric-1.21.11-2.0.6%2Bmc1.21.11-port.1.jar",
+      "sha256": "b8445ec425f1f1659e9341926dae10063ad6e943ea99598584ee2979ad0e3de6",
+      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.22), not on Modrinth. Physics engine for Create Simulated/Aeronautics; needs Forge Config API Port. Tries UDP for ship sync and falls back to TCP, so lazymc (TCP only) is fine.",
       "client_tiers": null
     },
     {
@@ -628,7 +628,7 @@
       "slug": "simulated",
       "side": "both",
       "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.18/simulated-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.jar",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.22/simulated-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.jar",
       "sha256": "4be8e9d0c4b112a6b2a87ca367f6deb4af2e3ba82795348b58045b658719d738",
       "notes": "Unofficial Fabric port, same release as Sable. Requires Create Fly >= 6.0.9 and Sable.",
       "client_tiers": null
@@ -638,8 +638,8 @@
       "slug": "aeronautics",
       "side": "both",
       "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.18/aeronautics-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.jar",
-      "sha256": "afc190ad9aa6d27d24f9ce9a565b9b435e377e67a25c696310d73c12657da03e",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.22/aeronautics-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.1.jar",
+      "sha256": "fe88444a2e2529283d563b41257f7605f6f8ea7b1dd0781db9c51f4206533798",
       "notes": "Unofficial Fabric port, same release as Sable. Requires Create Fly >= 6.0.9, Sable and Create Simulated. Release recommends >= 3 GB client RAM (dalit runs -Xmx3G).",
       "client_tiers": null
     }
