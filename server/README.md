@@ -64,7 +64,7 @@ Because of lazymc (below), that first boot happens when the first player joins.
 Players connect to **lazymc** on port 25565, never to `mc` directly
 ([`lazymc-docker-proxy`](https://github.com/joesturge/lazymc-docker-proxy)). It starts the
 `mc` container when someone joins and `docker stop`s it once nobody has been online for
-10 minutes (`lazymc.time.sleep_after`), so the JVM exits and its 6G of RAM is freed.
+10 minutes (`lazymc.time.sleep_after`), so the JVM exits and its 8G of RAM is freed.
 
 - **Joining a sleeping server** wakes it. The client is held, then shown a "server is
   starting" message if boot takes longer; reconnect after a minute or two.

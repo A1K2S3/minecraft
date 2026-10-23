@@ -63,7 +63,7 @@ services:
       EULA: "true"
       TYPE: "FABRIC"
       VERSION: "1.21.11"
-      MEMORY: "6G"
+      MEMORY: "8G"
       DIFFICULTY: "normal"
       MODE: "survival"
       ONLINE_MODE: "false"
