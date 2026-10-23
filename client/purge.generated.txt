@@ -16,3 +16,4 @@ skinrestorer-
 sable-fabric-
 simulated-fabric-
 aeronautics-fabric-
+modflared-

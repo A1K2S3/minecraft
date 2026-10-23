@@ -19,6 +19,29 @@ services:
     networks:
       mc-net:
         ipv4_address: 172.29.0.2
+    # Docker keeps container logs forever by default; cap them so they cannot fill
+    # the disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Public entry point: the playit.gg agent tunnels players in to lazymc on the
+  # host's 25565. The tunnel itself (and its public address) is set up in the
+  # playit.gg dashboard, pointing at 127.0.0.1:25565.
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:1.0
+    container_name: playit
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      SECRET_KEY: "${PLAYIT_SECRET_KEY}"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   mc:
     image: itzg/minecraft-server
@@ -40,6 +63,11 @@ services:
     networks:
       mc-net:
         ipv4_address: 172.29.0.3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       - lazymc.enabled=true
       - lazymc.group=mc

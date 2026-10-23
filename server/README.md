@@ -12,7 +12,7 @@ The mod list is **not** written here — it is generated into `mods.generated.en
 | `bootstrap`          | yes                 | Restore the world from Backblaze B2 if this machine has none, then start. Run this first on a fresh machine.                 |
 | `restart`            | yes                 | Save the world, recreate the containers, report. The deploy step.                                                            |
 | `.env.example`       | yes                 | Template for `.env`.                                                                                                         |
-| `.env`               | **no** — gitignored | `RCON_PASSWORD` plus the four Backblaze B2 values `bootstrap` restores from. This repo is public; the real values live only here and on the VM. |
+| `.env`               | **no** — gitignored | `RCON_PASSWORD`, `PLAYIT_SECRET_KEY`, plus the four Backblaze B2 values `bootstrap` restores from. This repo is public; the real values live only here and on the VM. |
 | `mods.generated.env` | yes                 | `MODRINTH_PROJECTS=...`, generated. Never hand-edit.                                                                         |
 | `data/`              | no — gitignored     | World, logs, and the mods the container downloads.                                                                           |
 | `.restore-stage/`    | no — gitignored     | Scratch space `bootstrap` downloads a snapshot into. Deleted on exit.                                                        |
@@ -34,7 +34,7 @@ the mod list is only ever the generated file.
 git clone https://github.com/A1K2S3/minecraft.git /root/mc-repo
 cd /root/mc-repo/server
 cp .env.example .env
-$EDITOR .env          # RCON_PASSWORD + the four Backblaze B2 values
+$EDITOR .env          # RCON_PASSWORD, PLAYIT_SECRET_KEY + the four Backblaze B2 values
 ./bootstrap --logs
 ```
 
@@ -61,7 +61,9 @@ Because of lazymc (below), that first boot happens when the first player joins.
 
 ## Sleeping when empty
 
-Players connect to **lazymc** on port 25565, never to `mc` directly
+Players reach the server through a **playit.gg** tunnel (the `playit` container; the
+tunnel and its public address are configured in the playit.gg dashboard, pointing at
+`127.0.0.1:25565`). That lands on **lazymc** on port 25565, never on `mc` directly
 ([`lazymc-docker-proxy`](https://github.com/joesturge/lazymc-docker-proxy)). It starts the
 `mc` container when someone joins and `docker stop`s it once nobody has been online for
 10 minutes (`lazymc.time.sleep_after`), so the JVM exits and its 8G of RAM is freed.

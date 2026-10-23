@@ -11,7 +11,8 @@
   "retired_prefixes": [
     "sable-fabric-",
     "simulated-fabric-",
-    "aeronautics-fabric-"
+    "aeronautics-fabric-",
+    "modflared-"
   ],
   "mods": [
     {
@@ -500,16 +501,6 @@
       "version": null,
       "notes": "",
       "client_version": "ByG214OZ",
-      "client_tiers": null
-    },
-    {
-      "name": "Modflared",
-      "slug": "modflared",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "Cloudflare tunnel client. install writes config/modflared/forced_tunnels.json for minecraft.dekhlo.to.",
-      "client_version": "ylsFkqBg",
       "client_tiers": null
     },
     {

@@ -23,9 +23,6 @@ $FabricLoaderId = "fabric-loader-$FabricLoaderVersion-$FabricMcVersion"
 $VersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
 $FabricProfileUrl = "https://meta.fabricmc.net/v2/versions/loader/$FabricMcVersion/$FabricLoaderVersion/profile/json"
 
-# --- modflared forced-tunnels config (written into the game dir during install) ---
-$ForcedTunnelsJson = '["minecraft.dekhlo.to"]'
-
 # --- manifest resolution ---
 # mods.generated.tsv (the mod/resourcepack/shaderpack table) and purge.generated.txt
 # (server-only filename prefixes) are the single source of truth, generated from
@@ -593,13 +590,15 @@ try {
         Write-Log "Shaders installed for '$Tier': Iris, Sodium 0.8.7, Complementary Unbound (shaderpacks\$ShaderpackZip)."
     }
 
-    # --- G: modflared forced-tunnels config (written to both locations modflared reads) ---
-    Write-Log "[6/8] Writing modflared forced_tunnels.json..."
+    # --- G: remove the retired modflared (Cloudflare tunnel) config ---
+    # Players now connect through playit.gg directly; the modflared jar itself is purged
+    # via retired_prefixes. Both locations modflared read are cleared.
+    Write-Log "[6/8] Removing old modflared tunnel config (if present)..."
     foreach ($d in @((Join-Path $TargetDir "config\modflared"), (Join-Path $TargetDir "modflared"))) {
-        New-Item -ItemType Directory -Force -Path $d | Out-Null
-        $ForcedTunnelsPath = Join-Path $d "forced_tunnels.json"
-        [System.IO.File]::WriteAllText($ForcedTunnelsPath, $ForcedTunnelsJson + "`n", $Utf8NoBom)
-        Write-Log "Wrote $ForcedTunnelsPath"
+        if (Test-Path -LiteralPath $d -PathType Container) {
+            Remove-Item -LiteralPath $d -Recurse -Force
+            Write-Log "Removed $d"
+        }
     }
 
     # --- G.7: tier config ---

@@ -8,8 +8,6 @@ FABRIC_LOADER_VERSION="0.19.3"
 FABRIC_LOADER_ID="fabric-loader-${FABRIC_LOADER_VERSION}-${FABRIC_MC_VERSION}"
 VERSION_MANIFEST_URL="https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
 FABRIC_PROFILE_URL="https://meta.fabricmc.net/v2/versions/loader/${FABRIC_MC_VERSION}/${FABRIC_LOADER_VERSION}/profile/json"
-# --- modflared forced-tunnels config (written into the game dir during install) ---
-FORCED_TUNNELS_JSON='["minecraft.dekhlo.to"]'
 
 # --- manifest resolution ---
 # mods.generated.tsv (the mod/resourcepack/shaderpack table) and purge.generated.txt
@@ -812,12 +810,15 @@ if [ "$HAS_SHADERS" = "1" ]; then
   log "Shaders installed for '$TIER': Iris, Sodium 0.8.7, Complementary Unbound (shaderpacks/$SHADERPACK_ZIP)."
 fi
 
-# --- G: modflared forced-tunnels config (written to both locations modflared reads) ---
-log "[6/8] Writing modflared forced_tunnels.json..."
+# --- G: remove the retired modflared (Cloudflare tunnel) config ---
+# Players now connect through playit.gg directly; the modflared jar itself is purged
+# via retired_prefixes. Both locations modflared read are cleared.
+log "[6/8] Removing old modflared tunnel config (if present)..."
 for d in "$TARGET_DIR/config/modflared" "$TARGET_DIR/modflared"; do
-  mkdir -p "$d"
-  printf '%s\n' "$FORCED_TUNNELS_JSON" > "$d/forced_tunnels.json"
-  log "Wrote $d/forced_tunnels.json"
+  if [ -d "$d" ]; then
+    rm -rf "$d"
+    log "Removed $d"
+  fi
 done
 
 # --- G.7: tier config ---
