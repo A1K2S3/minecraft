@@ -68,8 +68,8 @@ services:
       MODE: "survival"
       ONLINE_MODE: "false"
       MAX_TICK_TIME: "-1"
-      VIEW_DISTANCE: "8"
-      SIMULATION_DISTANCE: "6"
+      VIEW_DISTANCE: "6"
+      SIMULATION_DISTANCE: "5"
       USE_AIKAR_FLAGS: "true"
       ENABLE_RCON: "true"
       # ":offline" makes the image derive each op's offline-mode UUID locally
