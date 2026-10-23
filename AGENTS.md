@@ -99,32 +99,6 @@ Two fields exist for versions because they hold different things: `version` is t
 pin (a version _number_), `client_version` is the client pin (a version _ID_). They must
 describe the same build for a `both` mod.
 
-### Mods not on Modrinth (`url` entries)
-
-A jar that Modrinth does not host (e.g. a GitHub release asset, like the Sable / Create
-Simulated / Create Aeronautics port) is declared with `url` + `sha256` **instead of**
-`version` / `client_version`:
-
-```json
-{
-  "name": "Sable",
-  "slug": "sable",
-  "side": "both",
-  "type": "mod",
-  "url": "https://github.com/<owner>/<repo>/releases/download/<tag>/<file>.jar",
-  "sha256": "<64 lowercase hex>",
-  "notes": "",
-  "client_tiers": null
-}
-```
-
-`slug` is then just an identifier. `scripts/generate` downloads the file and refuses to
-continue if it does not match `sha256`. GitHub shows each asset's digest on the release
-(`gh release view <tag> -R <owner>/<repo> --json assets`). The server gets these through
-itzg's `MODS=` (written to `mods.generated.env` next to `MODRINTH_PROJECTS`), which
-does **not** resolve dependencies, so every dependency must be its own entry. Only
-`type: "mod"` is supported. To upgrade, change `url` and `sha256` together.
-
 `slug` may repeat **only** when every entry sharing it is client-side with non-overlapping
 `client_tiers` — one build to one set of tiers, a different build to the rest. (`sodium` used
 to be split that way, before every tier got shaders and Iris' pinned 0.8.7 became the only
@@ -206,6 +180,12 @@ it there and restart.
 They re-run their installer one-liner. Re-running is the update path: it skips any file
 already present with the correct hash, removes anything the manifest no longer marks active
 for their tier, and purges server-only jars.
+
+A row deleted from `mods.json` is simply gone from the manifest, so the installer no longer
+knows its jar and would leave it on a friend's disk. When removing a client/both mod
+outright, add its filename prefix (the TSV `prefix` column, e.g. `aeronautics-fabric-`) to
+the top-level `retired_prefixes` list in `mods.json`; `generate` appends it to
+`purge.generated.txt`, and refuses a prefix that still matches a shipped jar.
 
 ## How the client gets its list
 
