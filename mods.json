@@ -9,9 +9,6 @@
     "modi"
   ],
   "retired_prefixes": [
-    "sable-fabric-",
-    "simulated-fabric-",
-    "aeronautics-fabric-",
     "modflared-"
   ],
   "mods": [
@@ -607,6 +604,66 @@
       "version": "2.2.4",
       "notes": "Create addon; requires Create Fly (Modrinth dependency). Server and client pinned to the same build (2.2.4 = dPv5H31a).",
       "client_version": "dPv5H31a",
+      "client_tiers": null
+    },
+    {
+      "name": "Sable",
+      "slug": "sable",
+      "side": "both",
+      "type": "mod",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.25/sable-fabric-1.21.11-2.0.6%2Bmc1.21.11-port.1.jar",
+      "sha256": "b8445ec425f1f1659e9341926dae10063ad6e943ea99598584ee2979ad0e3de6",
+      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.25), not on Modrinth. Physics engine for Create Simulated/Aeronautics; needs Forge Config API Port. Tries UDP for ship sync and falls back to TCP, so lazymc (TCP only) is fine.",
+      "client_tiers": null
+    },
+    {
+      "name": "Create Simulated",
+      "slug": "simulated",
+      "side": "both",
+      "type": "mod",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.25/simulated-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.1.jar",
+      "sha256": "bc3d92507df9ec22d62311b31c24088e8a4a9c6fe528bc11d9906dacbed2f77d",
+      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.25), not on Modrinth. Requires Create Fly >= 6.0.9 and Sable. port.1 fixes a dedicated-server crash when a tilted ship cannot be disassembled.",
+      "client_tiers": null
+    },
+    {
+      "name": "Create Aeronautics",
+      "slug": "aeronautics",
+      "side": "both",
+      "type": "mod",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.25/aeronautics-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.2.jar",
+      "sha256": "9ab6b00af3dd4ab54800b3c72777164d336850f8d9135c3f81d3317878ff8ea9",
+      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.25), not on Modrinth. Requires Create Fly >= 6.0.9, Sable and Create Simulated. port.2 fixes the client crash with a heated balloon in view; port.1 fixed the hot air burner server crash. Release recommends >= 3 GB client RAM (dalit runs -Xmx3G).",
+      "client_tiers": null
+    },
+    {
+      "name": "Weapons Expanded",
+      "slug": "weaponsexpanded",
+      "side": "both",
+      "type": "mod",
+      "version": "1.9.3.1",
+      "notes": "New weapons, enchantments, effects. Requires Fabric API. Server and client pinned to the same build (1.9.3.1 = YbBlMo0T).",
+      "client_version": "YbBlMo0T",
+      "client_tiers": null
+    },
+    {
+      "name": "Enchantments Expansion",
+      "slug": "enchantments-expansion",
+      "side": "both",
+      "type": "mod",
+      "version": "v1.2.0+mod",
+      "notes": "Vanilla-style enchantments; the Fabric mod build of the data pack. Server-side logic; on clients it supplies the enchantment names. Pinned (v1.2.0+mod = kjzZws3E).",
+      "client_version": "kjzZws3E",
+      "client_tiers": null
+    },
+    {
+      "name": "Extended Vanilla Endgame",
+      "slug": "extended-vanilla-endgame",
+      "side": "both",
+      "type": "mod",
+      "version": "1.0.0+mc1.21.11",
+      "notes": "Endgame content. Requires Fabric API. Server and client pinned to the same build (1.0.0+mc1.21.11 = 34LdDDWF).",
+      "client_version": "34LdDDWF",
       "client_tiers": null
     }
   ]

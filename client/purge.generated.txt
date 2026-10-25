@@ -13,7 +13,4 @@ lithostitched-
 Terralith_
 grind-enchantments-
 skinrestorer-
-sable-fabric-
-simulated-fabric-
-aeronautics-fabric-
 modflared-
