@@ -130,8 +130,8 @@
       "slug": "jei",
       "side": "both",
       "type": "mod",
-      "version": null,
-      "notes": "",
+      "version": "27.23.0.71",
+      "notes": "Server pinned to the client build (vyofGDrh). Unpinned, the server pulled 27.54.0.111 on 2026-10-25, which fails bytecode verification in JustEnoughItems.onInitialize and kills startup.",
       "client_version": "vyofGDrh",
       "client_tiers": null
     },
