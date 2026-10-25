@@ -665,6 +665,16 @@
       "notes": "Endgame content. Requires Fabric API. Server and client pinned to the same build (1.0.0+mc1.21.11 = 34LdDDWF).",
       "client_version": "34LdDDWF",
       "client_tiers": null
+    },
+    {
+      "name": "Clear Glass",
+      "slug": "clear-glass",
+      "side": "client",
+      "type": "resourcepack",
+      "version": null,
+      "notes": "Seamless connected glass and panes (clear, stained, tinted). OptiFine-CTM format, so it needs Continuity to do anything; 1.3.0 dropped that dependency from its metadata but the files still need it. Installed to resourcepacks/ and enabled in options.txt. dalit has Continuity's connected textures off, so it only gets the base textures.",
+      "client_version": "cSvPz6kf",
+      "client_tiers": null
     }
   ]
 }
