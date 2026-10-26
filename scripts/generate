@@ -253,6 +253,12 @@ def validate(doc):
         isinstance(p, str) and re.fullmatch(r"[^\s/\\*?]+-", p) for p in retired
     ):
         raise GenerateError("retired_prefixes must be a list of filename prefixes ending in '-'")
+    retired_rp = doc.get("retired_resourcepacks", [])
+    if not isinstance(retired_rp, list) or not all(
+        isinstance(n, str) and re.fullmatch(r"[^\s#/\\*?][^/\\*?\t\r\n]*", n) and n == n.strip()
+        for n in retired_rp
+    ):
+        raise GenerateError("retired_resourcepacks must be a list of exact resourcepacks/ filenames")
 
     for i, e in enumerate(mods):
         where = f"mods[{i}] ({e.get('name', '?')!r})"
@@ -436,6 +442,8 @@ def build_client_purge(doc, allowed_types):
         "# Filename prefixes of server-only mods, so the client installer can",
         "# delete server-only jars a friend may still have in mods/.",
         "# Also the retired_prefixes of mods removed from the pack.",
+        "# A line starting resourcepacks/ is instead an exact file to delete there",
+        "# (retired_resourcepacks): a pack removed from the pack.",
     ]
     prefixes = []
     seen = set()
@@ -472,6 +480,11 @@ def build_client_purge(doc, allowed_types):
         if prefix not in seen:
             seen.add(prefix)
             prefixes.append(prefix)
+    for name in doc.get("retired_resourcepacks", []):
+        line = "resourcepacks/" + name
+        if line not in seen:
+            seen.add(line)
+            prefixes.append(line)
     return "\n".join(header + prefixes) + "\n", prefixes
 
 
@@ -507,6 +520,12 @@ def generate():
             if row[3] == "mods" and row[0].startswith(prefix):
                 raise GenerateError(
                     f"retired prefix {prefix!r} matches active client file {row[0]!r}"
+                )
+    for name in doc.get("retired_resourcepacks", []):
+        for row in tsv_rows:
+            if row[3] == "resourcepacks" and row[0] == name:
+                raise GenerateError(
+                    f"retired resourcepack {name!r} is still an active client file"
                 )
 
     contents = {

@@ -2,6 +2,8 @@
 # Filename prefixes of server-only mods, so the client installer can
 # delete server-only jars a friend may still have in mods/.
 # Also the retired_prefixes of mods removed from the pack.
+# A line starting resourcepacks/ is instead an exact file to delete there
+# (retired_resourcepacks): a pack removed from the pack.
 spark-
 polymer-bundled-
 graves-
@@ -14,3 +16,4 @@ Terralith_
 grind-enchantments-
 skinrestorer-
 modflared-
+resourcepacks/Clear Glass 1.3.0.zip

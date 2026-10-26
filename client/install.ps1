@@ -558,9 +558,20 @@ try {
     # --- E: remove server-only jars ---
     # The prefixes come from purge.generated.txt: mods.json's "side" == server field is
     # what decides a mod is server-only, so a friend's client mods\ never keeps them.
+    # A resourcepacks/<file> line (mods.json retired_resourcepacks) is an exact retired
+    # pack; deleting it is enough, Minecraft drops a missing pack from options.txt itself.
     Write-Log "[4/8] Removing server-only jars from mods\ (if present)..."
     foreach ($prefix in ([System.IO.File]::ReadAllLines($PurgeFile))) {
         if ($prefix -match '^\s*#' -or $prefix.Trim() -eq "") { continue }
+        if ($prefix.StartsWith("resourcepacks/")) {
+            $rpName = $prefix.Substring("resourcepacks/".Length)
+            $rpPath = Join-Path (Join-Path $TargetDir "resourcepacks") $rpName
+            if (Test-Path -LiteralPath $rpPath -PathType Leaf) {
+                Write-Log "Removing retired resourcepack: $rpName"
+                Remove-Item -LiteralPath $rpPath -Force
+            }
+            continue
+        }
         $found = Get-ChildItem -Path $ModsDir -Filter "$prefix*" -File -ErrorAction SilentlyContinue
         foreach ($m in $found) {
             Write-Log "Removing server-only jar: $($m.Name)"
@@ -662,6 +673,13 @@ try {
     $contAction = Get-ConfigAction $ContinuityJson
     Merge-JsonFile $ContinuityJson @{ connected_textures = $T_Continuity; emissive_textures = $T_Continuity }
     Write-Log "config\continuity.json ($Tier, $contAction): connected_textures=$T_Continuity emissive_textures=$T_Continuity"
+    # Continuity ships its own connected-textures pack (seamless glass that keeps the
+    # vanilla glint) as a Fabric built-in pack, off until listed in resourcePacks.
+    # Its id is the Identifier string Fabric registers it under: continuity:default.
+    if ($T_Continuity) {
+        Enable-Resourcepack $OptionsTxt "continuity:default"
+        Write-Log "options.txt ($Tier): resourcePacks += `"continuity:default`""
+    }
 
     # 3D Skin Layers -- config\skinlayers.json. No single master toggle; the 3D layers
     # are the per-body-part flags, so "off" clears them all, "on" sets them.

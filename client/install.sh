@@ -774,9 +774,20 @@ fi
 # --- E: remove server-only jars ---
 # The prefixes come from purge.generated.txt: mods.json's "side" == server field is
 # what decides a mod is server-only, so a friend's client mods/ never keeps them.
+# A resourcepacks/<file> line (mods.json retired_resourcepacks) is an exact retired
+# pack; deleting it is enough, Minecraft drops a missing pack from options.txt itself.
 log "[4/8] Removing server-only jars from mods/ (if present)..."
 while IFS= read -r prefix; do
-  case "$prefix" in ''|'#'*) continue ;; esac
+  case "$prefix" in
+    ''|'#'*) continue ;;
+    resourcepacks/*)
+      if [ -f "$TARGET_DIR/$prefix" ]; then
+        log "Removing retired resourcepack: ${prefix#resourcepacks/}"
+        rm -f "$TARGET_DIR/$prefix"
+      fi
+      continue
+      ;;
+  esac
   for f in "$MODS_DIR"/"$prefix"*; do
     if [ -f "$f" ]; then
       log "Removing server-only jar: $(basename "$f")"
@@ -873,6 +884,13 @@ entityDistanceScaling $T_ENTITY_DIST_SCALE" | merge_kv_file "$OPTIONS_TXT" ":"
   _cont_action="$(config_action "$CONTINUITY_JSON")"
   if json_merge "$CONTINUITY_JSON" "{\"connected_textures\":$T_CONTINUITY,\"emissive_textures\":$T_CONTINUITY}"; then
     log "config/continuity.json ($TIER, $_cont_action): connected_textures=$T_CONTINUITY emissive_textures=$T_CONTINUITY"
+  fi
+  # Continuity ships its own connected-textures pack (seamless glass that keeps the
+  # vanilla glint) as a Fabric built-in pack, off until listed in resourcePacks.
+  # Its id is the Identifier string Fabric registers it under: continuity:default.
+  if [ "$T_CONTINUITY" = "true" ]; then
+    enable_resourcepack "$OPTIONS_TXT" "continuity:default"
+    log "options.txt ($TIER): resourcePacks += \"continuity:default\""
   fi
 
   # 3D Skin Layers -- config/skinlayers.json. No single master toggle; the 3D

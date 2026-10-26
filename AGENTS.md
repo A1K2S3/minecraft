@@ -213,6 +213,18 @@ outright, add its filename prefix (the TSV `prefix` column, e.g. `aeronautics-fa
 the top-level `retired_prefixes` list in `mods.json`; `generate` appends it to
 `purge.generated.txt`, and refuses a prefix that still matches a shipped jar.
 
+A removed `resourcepack` row is the same problem in `resourcepacks/`, where it also stays
+enabled in `options.txt`. Add its **exact** filename (the TSV `filename` column, spaces and
+all, e.g. `Clear Glass 1.3.0.zip`) to the top-level `retired_resourcepacks` list;
+`generate` writes it to `purge.generated.txt` as `resourcepacks/<filename>` and the
+installers delete that one file. Minecraft drops the now-missing pack from `resourcePacks`
+on its next launch, so `options.txt` needs no edit.
+
+Connected glass comes from Continuity's built-in pack `continuity:default`, which the
+installers add to `resourcePacks` on every tier whose `connected_textures` is on. Its glass
+rules carry `resourceCondition=textures/block/glass.png`, so any resource pack that
+overrides `glass.png` silently switches them off.
+
 ## How the client gets its list
 
 The installers are run as `curl ... | sh`, so there is no checkout on a friend's machine.
