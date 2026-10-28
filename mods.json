@@ -640,6 +640,16 @@
       "client_tiers": null
     },
     {
+      "name": "Create Offroad",
+      "slug": "offroad",
+      "side": "both",
+      "type": "mod",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.28.1/offroad-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.1.jar",
+      "sha256": "44fd389deb6d02bfc557b63e0b0f486c2d1aa88f95f525276c3591bd0510d2be",
+      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.28.1), not on Modrinth. Wheels for land vehicles (wheel mount + tires), rock cutting wheel, borehead bearing. Requires Create Fly >= 6.0.9, Sable and Create Simulated.",
+      "client_tiers": null
+    },
+    {
       "name": "Weapons Expanded",
       "slug": "weaponsexpanded",
       "side": "both",
