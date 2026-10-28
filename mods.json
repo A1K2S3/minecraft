@@ -614,9 +614,9 @@
       "slug": "sable",
       "side": "both",
       "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.27/sable-fabric-1.21.11-2.0.6%2Bmc1.21.11-port.2.jar",
-      "sha256": "30d18c53d1d0ab429f782d3b66dea9854b1825460af84e8eeb6660314c2a7c79",
-      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.27: ships visible with Iris shader packs), not on Modrinth. Physics engine for Create Simulated/Aeronautics; needs Forge Config API Port. Tries UDP for ship sync and falls back to TCP, so lazymc (TCP only) is fine.",
+      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.28/sable-fabric-1.21.11-2.0.6%2Bmc1.21.11-port.3.jar",
+      "sha256": "5ef7376e922097385a00ed1f1320bf521814ac3aa4fc126ecb47edb88498a511",
+      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.28: arrows no longer fling ships away; Iris fix from v2026.10.27), not on Modrinth. Physics engine for Create Simulated/Aeronautics; needs Forge Config API Port. Tries UDP for ship sync and falls back to TCP, so lazymc (TCP only) is fine.",
       "client_tiers": null
     },
     {
