@@ -44,7 +44,7 @@ services:
         max-file: "3"
 
   mc:
-    image: itzg/minecraft-server
+    image: itzg/minecraft-server:java21
     container_name: mc
     tty: true
     stdin_open: true
@@ -77,20 +77,22 @@ services:
       - lazymc.time.sleep_after=600
       # A cold boot of this modpack (longer on a deploy, which re-downloads
       # mods) can outlast lazymc's 300s default.
-      - lazymc.server.start_timeout=600
-      # What the server list shows while mc is asleep. Protocol 774 is 1.21.11;
+      - lazymc.server.start_timeout=900
+      # What the server list shows while mc is asleep. Protocol 767 is 1.21.1;
       # without these the list reports a version mismatch.
-      - lazymc.public.version=1.21.11
-      - lazymc.public.protocol=774
+      - lazymc.public.version=1.21.1
+      - lazymc.public.protocol=767
     # ./.env             -- secrets, NOT committed (see .env.example)
-    # ./mods.generated.env -- MODRINTH_PROJECTS, generated from ../mods.json by scripts/generate
+    # ./mods.generated.env -- MODRINTH_PROJECTS (pinned version ids), generated from
+    #                         ../mods.json by scripts/generate
     env_file:
       - ./.env
       - ./mods.generated.env
     environment:
       EULA: "true"
-      TYPE: "FABRIC"
-      VERSION: "1.21.11"
+      TYPE: "NEOFORGE"
+      VERSION: "1.21.1"
+      NEOFORGE_VERSION: "21.1.265"
       MEMORY: "8G"
       DIFFICULTY: "normal"
       MODE: "survival"
@@ -108,8 +110,8 @@ services:
       OPS: "Guardian:offline,Chaukidaar:offline,Sid19s:offline"
       OP_PERMISSION_LEVEL: "4"
       RCON_PASSWORD: "${RCON_PASSWORD}"
-      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
-      MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: "beta"
+      # Every mod, dependency included, is its own pinned entry in MODRINTH_PROJECTS,
+      # so the container resolves nothing on its own.
 
 networks:
   # Outside Docker's default 172.17.0.0/16 so the static addresses above stay
