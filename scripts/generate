@@ -104,11 +104,11 @@ def batch_projects(slugs):
     return {p["slug"]: p["id"] for p in data}
 
 
-def resolve_latest(slug, allowed_types, mc_version="1.21.11", loader="fabric"):
+def resolve_latest(slug, allowed_types, mc_version, loader):
     """Newest version for this MC version whose version_type is allowed.
 
     Tries the loader filter first; retries once without it (datapacks and
-    resource packs are not fabric-loader tagged). Returns a version dict or None.
+    resource packs are not loader tagged). Returns a version dict or None.
     """
     for use_loader in (True, False):
         params = {"game_versions": json.dumps([mc_version])}
@@ -226,6 +226,23 @@ def filename_prefix(filename):
     )
 
 
+def entry_prefix(e, filename):
+    """The prefix for an entry: its optional "prefix" override, else derived.
+
+    The override exists for a mod whose derived prefix is also a prefix of another
+    mod's jar (Create's "create-" vs "create-aeronautics-bundled-"): the installers
+    match jars by startswith, so the shorter prefix would claim both.
+    """
+    override = e.get("prefix")
+    if override is None:
+        return filename_prefix(filename)
+    if not filename.startswith(override):
+        raise GenerateError(
+            f"slug {e['slug']!r}: prefix {override!r} is not a prefix of {filename!r}"
+        )
+    return override
+
+
 # --------------------------------------------------------------------------- #
 # Load + validate mods.json                                                    #
 # --------------------------------------------------------------------------- #
@@ -241,6 +258,9 @@ def load_mods():
 
 
 def validate(doc):
+    for key in ("minecraft", "loader"):
+        if not isinstance(doc.get(key), str) or not doc[key]:
+            raise GenerateError(f"top-level {key} must be a non-empty string")
     tiers = doc.get("client_tiers")
     if not isinstance(tiers, list) or not tiers:
         raise GenerateError("top-level client_tiers must be a non-empty list")
@@ -250,9 +270,9 @@ def validate(doc):
         raise GenerateError("mods must be an array")
     retired = doc.get("retired_prefixes", [])
     if not isinstance(retired, list) or not all(
-        isinstance(p, str) and re.fullmatch(r"[^\s/\\*?]+-", p) for p in retired
+        isinstance(p, str) and re.fullmatch(r"[^\s/\\*?]+[-_]", p) for p in retired
     ):
-        raise GenerateError("retired_prefixes must be a list of filename prefixes ending in '-'")
+        raise GenerateError("retired_prefixes must be a list of filename prefixes ending in '-' or '_'")
     retired_rp = doc.get("retired_resourcepacks", [])
     if not isinstance(retired_rp, list) or not all(
         isinstance(n, str) and re.fullmatch(r"[^\s#/\\*?][^/\\*?\t\r\n]*", n) and n == n.strip()
@@ -369,6 +389,7 @@ def build_server_env(doc):
 
 def build_client_tsv(doc, tiers, tier_set, versions_by_id, slug_to_pid, allowed_types):
     rows = []  # (filename, sha256, url, dest, tiers_str, prefix)
+    mc_version, loader = doc["minecraft"], doc["loader"]
     for e in doc["mods"]:
         if e["side"] not in ("client", "both"):
             continue
@@ -381,7 +402,7 @@ def build_client_tsv(doc, tiers, tier_set, versions_by_id, slug_to_pid, allowed_
         if "url" in e:
             verify_url_entry(e)
             filename = url_filename(e["url"])
-            rows.append((filename, e["sha256"], e["url"], dest, tiers_str, filename_prefix(filename)))
+            rows.append((filename, e["sha256"], e["url"], dest, tiers_str, entry_prefix(e, filename)))
             continue
 
         cv = e["client_version"]
@@ -400,17 +421,17 @@ def build_client_tsv(doc, tiers, tier_set, versions_by_id, slug_to_pid, allowed_
                     f"not slug {slug!r} (project {expected_pid!r})"
                 )
         else:
-            version = resolve_latest(slug, allowed_types)
+            version = resolve_latest(slug, allowed_types, mc_version, loader)
             if version is None:
                 raise GenerateError(
-                    f"no fabric/1.21.11 version found for client slug {slug!r}"
+                    f"no {loader}/{mc_version} version found for client slug {slug!r}"
                 )
 
         f = primary_file(version, slug)
         filename = f["filename"]
         url = f["url"]
         sha256 = download_sha256(url, f.get("hashes", {}).get("sha512"), slug)
-        prefix = filename_prefix(filename) if dest == "mods" else "-"
+        prefix = entry_prefix(e, filename) if dest == "mods" else "-"
         rows.append((filename, sha256, url, dest, tiers_str, prefix))
 
     # Check 5: within each tier, no two mods-dest rows may share a prefix.
@@ -437,6 +458,7 @@ def build_client_tsv(doc, tiers, tier_set, versions_by_id, slug_to_pid, allowed_
 
 
 def build_client_purge(doc, allowed_types):
+    mc_version, loader = doc["minecraft"], doc["loader"]
     header = [
         GEN_HEADER,
         "# Filename prefixes of server-only mods, so the client installer can",
@@ -452,7 +474,7 @@ def build_client_purge(doc, allowed_types):
             continue
         slug = e["slug"]
         if "url" in e:
-            prefix = filename_prefix(url_filename(e["url"]))
+            prefix = entry_prefix(e, url_filename(e["url"]))
             if prefix not in seen:
                 seen.add(prefix)
                 prefixes.append(prefix)
@@ -461,18 +483,18 @@ def build_client_purge(doc, allowed_types):
             if e["version"] is not None:
                 version = resolve_pinned(slug, e["version"])
             else:
-                version = resolve_latest(slug, allowed_types)
+                version = resolve_latest(slug, allowed_types, mc_version, loader)
         except GenerateError as exc:
             print(f"warning: {exc}", file=sys.stderr)
             continue
         if version is None:
             print(
-                f"warning: no fabric/1.21.11 version found for server-only mod {slug!r}; skipping",
+                f"warning: no {loader}/{mc_version} version found for server-only mod {slug!r}; skipping",
                 file=sys.stderr,
             )
             continue
         f = primary_file(version, slug)
-        prefix = filename_prefix(f["filename"])
+        prefix = entry_prefix(e, f["filename"])
         if prefix not in seen:
             seen.add(prefix)
             prefixes.append(prefix)
