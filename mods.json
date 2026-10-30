@@ -691,7 +691,7 @@
       "side": "client",
       "type": "mod",
       "version": null,
-      "notes": "Replaces Continuity (Fabric-only): connected glass and other CTM.",
+      "notes": "Replaces Continuity (Fabric-only). Engine only, no textures of its own: the glass comes from the Fusion Connected Glass resource pack.",
       "client_version": "AYDaLPK8",
       "client_tiers": null
     },
@@ -997,6 +997,16 @@
       "version": null,
       "notes": "Sound pack for Presence Footsteps. Installed to resourcepacks/ and enabled in options.txt.",
       "client_version": "yAgMm4Uo",
+      "client_tiers": null
+    },
+    {
+      "name": "Fusion Connected Glass",
+      "slug": "fusion-connected-glass",
+      "side": "client",
+      "type": "resourcepack",
+      "version": null,
+      "notes": "The connected glass itself. Fusion is only the engine and ships no textures; Continuity used to bundle this. Installed to resourcepacks/ and enabled in options.txt.",
+      "client_version": "oYKivjVk",
       "client_tiers": null
     }
   ]
