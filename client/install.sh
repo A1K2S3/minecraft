@@ -160,6 +160,11 @@ log "[0/8] Using game directory: $TARGET_DIR"
 # Its absence marks the first NeoForge install into this game directory (migration).
 NEOFORGE_VERSION_JSON="$TARGET_DIR/versions/${NEOFORGE_ID}/${NEOFORGE_ID}.json"
 LAUNCHER_PROFILES="$TARGET_DIR/launcher_profiles.json"
+# The patched client jar is the NeoForge installer's processor output (PATCHED in its
+# install_profile.json). The version json alone does not prove the processors ran.
+NEOFORGE_CLIENT_JAR="$TARGET_DIR/libraries/net/neoforged/neoforge/${NEOFORGE_VERSION}/neoforge-${NEOFORGE_VERSION}-client.jar"
+# Installer state that must survive a failed run (installer jar + its .log).
+MCF_DIR="$TARGET_DIR/.mcf"
 
 MODS_DIR="$TARGET_DIR/mods"
 mkdir -p "$MODS_DIR"
@@ -451,6 +456,7 @@ find_java21() {
   for _fj in /usr/lib/jvm/*/bin/java \
              /Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java \
              "$TARGET_DIR"/runtime/java-runtime-*/*/java-runtime-*/bin/java \
+             "$TARGET_DIR"/runtime/java-runtime-*/bin/java \
              "$TARGET_DIR"/runtime/java-runtime-*/*/java-runtime-*/jre.bundle/Contents/Home/bin/java; do
     if [ -f "$_fj" ]; then printf '%s\n' "$_fj" >> "$_fj_list"; fi
   done
@@ -731,12 +737,15 @@ fi
 # its libraries, and a launcher profile. TLauncher only needs the version folder.
 log "[2/8] Installing NeoForge ${NEOFORGE_VERSION} (${NEOFORGE_ID})..."
 PROFILE_ID="$NEOFORGE_ID"
-if [ -f "$NEOFORGE_VERSION_JSON" ]; then
+if [ -f "$NEOFORGE_VERSION_JSON" ] && [ -f "$NEOFORGE_CLIENT_JAR" ]; then
   log "NeoForge ${NEOFORGE_VERSION} already installed, skipping."
 elif [ "${MCF_SKIP_LOADER_INSTALL:-}" = "1" ]; then
   # Testing only (dry runs on a throwaway directory). Never set this for real players.
   warn "MCF_SKIP_LOADER_INSTALL=1: NOT installing NeoForge."
 else
+  if [ -f "$NEOFORGE_VERSION_JSON" ]; then
+    warn "versions/${NEOFORGE_ID} exists but the patched client jar is missing; re-running the NeoForge installer."
+  fi
   JAVA_BIN="$(find_java21)" || die "Java 21 or newer is required to install NeoForge, and none was found.
 Install it, then re-run this installer:
   Windows/macOS/Linux: https://adoptium.net/temurin/releases/?version=21  (pick the JRE or JDK, 21)
@@ -745,15 +754,21 @@ Install it, then re-run this installer:
   Fedora:              sudo dnf install java-21-openjdk-headless
 Or start Minecraft 1.21.1 once from the official launcher (it downloads a Java 21 runtime) and re-run."
   log "Using Java: $JAVA_BIN"
-  download_verify "$NEOFORGE_INSTALLER_NAME" "$NEOFORGE_INSTALLER_SHA256" "$NEOFORGE_INSTALLER_URL" "$TMPDIR_CREATED"
+  download_verify "$NEOFORGE_INSTALLER_NAME" "$NEOFORGE_INSTALLER_SHA256" "$NEOFORGE_INSTALLER_URL" "$MCF_DIR"
   # The installer wants an existing launcher_profiles.json (a fresh .minecraft has none).
   if [ ! -f "$LAUNCHER_PROFILES" ]; then
     printf '%s\n' '{"profiles":{},"settings":{},"version":3}' > "$LAUNCHER_PROFILES"
   fi
-  "$JAVA_BIN" -jar "$TMPDIR_CREATED/$NEOFORGE_INSTALLER_NAME" --install-client "$TARGET_DIR" \
-    || die "The NeoForge installer failed. See its output above."
-  [ -f "$NEOFORGE_VERSION_JSON" ] || die "The NeoForge installer finished but ${NEOFORGE_VERSION_JSON} is missing."
-  log "NeoForge ${NEOFORGE_VERSION} installed to versions/${NEOFORGE_ID}/"
+  _nf_rc=0
+  "$JAVA_BIN" -jar "$MCF_DIR/$NEOFORGE_INSTALLER_NAME" --install-client "$TARGET_DIR" || _nf_rc=$?
+  if [ "$_nf_rc" -ne 0 ] || [ ! -f "$NEOFORGE_VERSION_JSON" ] || [ ! -f "$NEOFORGE_CLIENT_JAR" ]; then
+    die "The NeoForge installer did not finish (exit code ${_nf_rc}; expected ${NEOFORGE_CLIENT_JAR}).
+Installer log: $MCF_DIR/$NEOFORGE_INSTALLER_NAME.log
+Run the installer by hand, choose 'Install client', and point it at $TARGET_DIR :
+  \"$JAVA_BIN\" -jar \"$MCF_DIR/$NEOFORGE_INSTALLER_NAME\"
+Then re-run this script."
+  fi
+  log "NeoForge ${NEOFORGE_VERSION} installed to versions/${NEOFORGE_ID}/ (patched client jar present)."
 fi
 
 # --- D: launcher_profiles.json ---

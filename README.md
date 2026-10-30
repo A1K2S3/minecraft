@@ -17,7 +17,8 @@ Re-running your one-liner is also the update path.
 - You need **Java 21** once, for the installer to set up NeoForge. The installer finds it
   (including the one the official launcher downloads) or tells you how to get it:
   [Temurin 21](https://adoptium.net/temurin/releases/?version=21), `winget install EclipseAdoptium.Temurin.21.JRE`
-  on Windows, `brew install --cask temurin@21` on macOS.
+  on Windows, `brew install --cask temurin@21` on macOS. On Windows, if no Java 21 is found
+  the installer downloads a portable one into `.minecraft\.mcf\java`.
 - Coming from the old Fabric pack: the installer first copies your `mods/` and `config/` to
   `mods-backup-<date>` and `config-backup-<date>` in your game folder, then removes every old
   Fabric jar. Your worlds, screenshots and `options.txt` are kept.
@@ -47,6 +48,22 @@ Re-running your one-liner is also the update path.
 ```sh
 curl -fsSL https://raw.githubusercontent.com/A1K2S3/minecraft/main/client/install.sh | sh -s -- --dalit
 ```
+
+## Troubleshooting
+
+**The game says `Mod ID: 'minecraft' ... Actual version: '[MISSING]'` for every mod.** NeoForge was not
+fully installed (its patched client jar,
+`libraries\net\neoforged\neoforge\21.1.265\neoforge-21.1.265-client.jar`, is missing). Re-run the
+installer: it now notices this and re-runs the NeoForge step, and stops with the installer log path
+(`.minecraft\.mcf\neoforge-21.1.265-installer.jar.log`) if that fails. To do the NeoForge step by
+hand, download [neoforge-21.1.265-installer.jar](https://maven.neoforged.net/releases/net/neoforged/neoforge/21.1.265/neoforge-21.1.265-installer.jar),
+then on Windows double-click it, or run (TLauncher's Java shown):
+
+```
+"%APPDATA%\.minecraft\runtime\java-runtime-delta\windows\java-runtime-delta\bin\java.exe" -jar "%USERPROFILE%\Downloads\neoforge-21.1.265-installer.jar"
+```
+
+Choose **Install client**, point it at your `.minecraft` folder, then re-run the one-liner.
 
 ## What changed
 

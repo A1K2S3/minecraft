@@ -304,21 +304,26 @@ function Get-JavaMajor($java) {
 }
 
 # Find-Java21 returns the path of the first java.exe that is 21 or newer, else $null.
-# Order: JAVA_HOME, PATH, common JDK folders, then the runtime the Minecraft launcher
-# bundles for 1.21 (java-runtime-delta is Java 21).
+# Order: JAVA_HOME, PATH, the runtime the Minecraft/TLauncher launchers bundle for 1.21
+# (java-runtime-delta is Java 21), then common JDK folders.
 function Find-Java21($GameDir) {
     $cands = New-Object System.Collections.Generic.List[string]
     if ($env:JAVA_HOME) { $cands.Add((Join-Path $env:JAVA_HOME "bin\java.exe")) }
     $cmd = Get-Command java -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($cmd) { $cands.Add($cmd.Source) }
+    $pf86 = ${env:ProgramFiles(x86)}
     $patterns = @(
+        "$GameDir\runtime\java-runtime-delta\windows*\java-runtime-delta\bin\java.exe",
+        "$GameDir\runtime\java-runtime-delta\bin\java.exe",
+        "$env:APPDATA\.minecraft\runtime\java-runtime-delta\windows*\java-runtime-delta\bin\java.exe",
+        "$env:APPDATA\.minecraft\runtime\java-runtime-delta\bin\java.exe",
+        "$env:LOCALAPPDATA\Packages\Microsoft.4297127D64EC6_*\LocalCache\Local\runtime\java-runtime-delta\windows-x64\java-runtime-delta\bin\java.exe",
+        "$pf86\Minecraft Launcher\runtime\java-runtime-delta\windows-x64\java-runtime-delta\bin\java.exe",
         "$env:ProgramFiles\Eclipse Adoptium\*\bin\java.exe",
-        "$env:ProgramFiles\Java\*\bin\java.exe",
-        "$env:ProgramFiles\Microsoft\*\bin\java.exe",
+        "$env:ProgramFiles\Microsoft\jdk-*\bin\java.exe",
+        "$env:ProgramFiles\Java\jdk-*\bin\java.exe",
         "$env:ProgramFiles\Zulu\*\bin\java.exe",
-        "$env:ProgramFiles\Amazon Corretto\*\bin\java.exe",
-        "$GameDir\runtime\java-runtime-*\*\java-runtime-*\bin\java.exe",
-        "$env:LOCALAPPDATA\Packages\Microsoft.4297127D64EC6_*\LocalCache\Local\runtime\java-runtime-*\*\java-runtime-*\bin\java.exe"
+        "$env:ProgramFiles\Amazon Corretto\*\bin\java.exe"
     )
     foreach ($pat in $patterns) {
         foreach ($f in @(Get-ChildItem -Path $pat -File -ErrorAction SilentlyContinue)) { $cands.Add($f.FullName) }
@@ -328,6 +333,41 @@ function Find-Java21($GameDir) {
         if ((Get-JavaMajor $c) -ge 21) { return $c }
     }
     return $null
+}
+
+# Install-PortableJava21 downloads a portable Temurin 21 JRE (Windows x64) into $CacheDir
+# and returns its java.exe. The Adoptium assets API gives both the zip link and its
+# SHA-256, so the download is verified. Reuses an earlier download when present.
+function Install-PortableJava21($CacheDir) {
+    $existing = @(Get-ChildItem -Path (Join-Path $CacheDir "jre21\*\bin\java.exe") -File -ErrorAction SilentlyContinue)
+    foreach ($e in $existing) { if ((Get-JavaMajor $e.FullName) -ge 21) { return $e.FullName } }
+    Write-Log "No Java 21 found; downloading a portable Temurin 21 JRE (about 50 MB)..."
+    $api = "https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse"
+    $oldPref = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+    try {
+        $assets = @(Invoke-RestMethod -Uri $api -UseBasicParsing)
+        if ($assets.Count -lt 1) { Fail "The Adoptium API returned no Temurin 21 JRE for Windows x64." }
+        $pkg = $assets[0].binary.package
+        if ((-not $pkg.link) -or (-not $pkg.checksum)) { Fail "The Adoptium API response had no download link or checksum." }
+        New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
+        $zip = Join-Path $CacheDir "temurin21-jre.zip"
+        Invoke-WebRequest -Uri $pkg.link -OutFile $zip -UseBasicParsing
+    } finally {
+        $ProgressPreference = $oldPref
+    }
+    $actual = Get-Sha256 -path $zip
+    if ($actual -ne $pkg.checksum.ToLower()) {
+        Remove-Item -Force -LiteralPath $zip
+        Fail "SHA-256 mismatch for the Temurin 21 JRE zip: expected $($pkg.checksum), got $actual"
+    }
+    $dest = Join-Path $CacheDir "jre21"
+    if (Test-Path -LiteralPath $dest) { Remove-Item -Recurse -Force -LiteralPath $dest }
+    Expand-Archive -LiteralPath $zip -DestinationPath $dest -Force
+    Remove-Item -Force -LiteralPath $zip
+    $java = @(Get-ChildItem -Path (Join-Path $dest "*\bin\java.exe") -File -ErrorAction SilentlyContinue) | Select-Object -First 1
+    if ((-not $java) -or ((Get-JavaMajor $java.FullName) -lt 21)) { Fail "The downloaded Temurin 21 JRE did not run." }
+    return $java.FullName
 }
 
 # --- tier selection (mutually exclusive, REQUIRED) ---
@@ -403,6 +443,11 @@ Write-Log "[0/8] Using game directory: $TargetDir"
 # Its absence marks the first NeoForge install into this game directory (migration).
 $NeoForgeVersionJson = Join-Path $TargetDir "versions\$NeoForgeId\$NeoForgeId.json"
 $LauncherProfilesPath = Join-Path $TargetDir "launcher_profiles.json"
+# The patched client jar is the NeoForge installer's processor output (PATCHED in its
+# install_profile.json). The version json alone does not prove the processors ran.
+$NeoForgeClientJar = Join-Path $TargetDir "libraries\net\neoforged\neoforge\$NeoForgeVersion\neoforge-$NeoForgeVersion-client.jar"
+# Installer state that must survive a failed run (installer jar + its .log, portable JRE).
+$McfDir = Join-Path $TargetDir ".mcf"
 
 $ModsDir = Join-Path $TargetDir "mods"
 if (-not (Test-Path -Path $ModsDir)) {
@@ -569,31 +614,34 @@ try {
     # its libraries, and a launcher profile. TLauncher only needs the version folder.
     Write-Log "[2/8] Installing NeoForge $NeoForgeVersion ($NeoForgeId)..."
     $ProfileId = $NeoForgeId
-    if (Test-Path -LiteralPath $NeoForgeVersionJson) {
+    if ((Test-Path -LiteralPath $NeoForgeVersionJson) -and (Test-Path -LiteralPath $NeoForgeClientJar)) {
         Write-Log "NeoForge $NeoForgeVersion already installed, skipping."
     } elseif ($env:MCF_SKIP_LOADER_INSTALL -eq "1") {
         # Testing only (dry runs on a throwaway directory). Never set this for real players.
         Write-Warn2 "MCF_SKIP_LOADER_INSTALL=1: NOT installing NeoForge."
     } else {
-        $JavaBin = Find-Java21 $TargetDir
-        if (-not $JavaBin) {
-            Fail ("Java 21 or newer is required to install NeoForge, and none was found.`n" +
-                  "Install it, then re-run this installer:`n" +
-                  "  https://adoptium.net/temurin/releases/?version=21  (pick the JRE or JDK, 21, Windows x64 .msi)`n" +
-                  "  or: winget install EclipseAdoptium.Temurin.21.JRE`n" +
-                  "Or start Minecraft 1.21.1 once from the official launcher (it downloads a Java 21 runtime) and re-run.")
+        if (Test-Path -LiteralPath $NeoForgeVersionJson) {
+            Write-Warn2 "versions\$NeoForgeId exists but the patched client jar is missing; re-running the NeoForge installer."
         }
+        $JavaBin = Find-Java21 $TargetDir
+        if (-not $JavaBin) { $JavaBin = Install-PortableJava21 (Join-Path $McfDir "java") }
         Write-Log "Using Java: $JavaBin"
-        Invoke-DownloadVerify $NeoForgeInstallerName $NeoForgeInstallerSha256 $NeoForgeInstallerUrl $TempDir
+        Invoke-DownloadVerify $NeoForgeInstallerName $NeoForgeInstallerSha256 $NeoForgeInstallerUrl $McfDir
         # The installer wants an existing launcher_profiles.json (a fresh .minecraft has none).
         if (-not (Test-Path -LiteralPath $LauncherProfilesPath)) {
             [System.IO.File]::WriteAllText($LauncherProfilesPath, '{"profiles":{},"settings":{},"version":3}' + "`n", $Utf8NoBom)
         }
-        $InstallerPath = Join-Path $TempDir $NeoForgeInstallerName
+        $InstallerPath = Join-Path $McfDir $NeoForgeInstallerName
         $proc = Start-Process -FilePath $JavaBin -ArgumentList @("-jar", "`"$InstallerPath`"", "--install-client", "`"$TargetDir`"") -Wait -NoNewWindow -PassThru
-        if ($proc.ExitCode -ne 0) { Fail "The NeoForge installer failed (exit code $($proc.ExitCode)). See its output above." }
-        if (-not (Test-Path -LiteralPath $NeoForgeVersionJson)) { Fail "The NeoForge installer finished but $NeoForgeVersionJson is missing." }
-        Write-Log "NeoForge $NeoForgeVersion installed to versions\$NeoForgeId\"
+        $InstallerOk = ($proc.ExitCode -eq 0) -and (Test-Path -LiteralPath $NeoForgeVersionJson) -and (Test-Path -LiteralPath $NeoForgeClientJar)
+        if (-not $InstallerOk) {
+            Fail ("The NeoForge installer did not finish (exit code $($proc.ExitCode); patched client jar present: $(Test-Path -LiteralPath $NeoForgeClientJar)).`n" +
+                  "Installer log: $InstallerPath.log`n" +
+                  "Run the installer by hand, choose 'Install client', and point it at $TargetDir :`n" +
+                  "  `"$JavaBin`" -jar `"$InstallerPath`"`n" +
+                  "Then re-run this script.")
+        }
+        Write-Log "NeoForge $NeoForgeVersion installed to versions\$NeoForgeId\ (patched client jar present)."
     }
 
     # --- D: launcher_profiles.json ---
