@@ -1,7 +1,7 @@
 {
-  "minecraft": "1.21.11",
-  "loader": "fabric",
-  "loader_version": "0.19.3",
+  "minecraft": "1.21.1",
+  "loader": "neoforge",
+  "loader_version": "21.1.265",
   "server_default_version_type": "beta",
   "client_tiers": [
     "dalit",
@@ -9,286 +9,59 @@
     "modi"
   ],
   "retired_prefixes": [
-    "modflared-"
+    "AmbientSounds_FABRIC_",
+    "BiomesOPlenty-fabric-",
+    "CreativeCore_FABRIC_",
+    "GlitchCore-fabric-",
+    "ImmediatelyFast-Fabric-",
+    "InventoryProfilesNext-fabric-",
+    "PuzzlesLib-",
+    "StorageDrawers-fabric-",
+    "TerraBlender-fabric-",
+    "aeronautics-fabric-",
+    "armor-hider-fabric-",
+    "balm-fabric-",
+    "c2me-fabric-mc1.21.11-",
+    "carryon-fabric-",
+    "continuity-",
+    "create-fly-",
+    "cullleaves-fabric-",
+    "enderitemod-fabric-",
+    "eunomia-fabric-",
+    "expanded_weaponry-",
+    "extended-vanilla-endgame-",
+    "fabric-api-",
+    "fabric-language-kotlin-",
+    "graves-",
+    "iris-fabric-",
+    "libIPN-fabric-",
+    "lithium-fabric-",
+    "midnightlib-fabric-",
+    "modflared-",
+    "offroad-fabric-",
+    "polymer-bundled-",
+    "sable-fabric-",
+    "saturated-eating-",
+    "simulated-fabric-",
+    "skinlayers3d-fabric-",
+    "sodium-fabric-",
+    "sound-physics-remastered-fabric-",
+    "travelersbackpack-fabric-",
+    "voxelmap-fabric-",
+    "waystones-fabric-"
   ],
   "retired_resourcepacks": [
     "Clear Glass 1.3.0.zip"
   ],
   "mods": [
     {
-      "name": "spark",
-      "slug": "spark",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": ""
-    },
-    {
-      "name": "Fabric API",
-      "slug": "fabric-api",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "6qAuTtLR",
-      "client_tiers": null
-    },
-    {
-      "name": "Lithium",
-      "slug": "lithium",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "Ow7wA0kG",
-      "client_tiers": null
-    },
-    {
-      "name": "FerriteCore",
-      "slug": "ferrite-core",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "Ii0gP3D8",
-      "client_tiers": null
-    },
-    {
-      "name": "Balm",
-      "slug": "balm",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "5POKgjJn",
-      "client_tiers": null
-    },
-    {
-      "name": "Forge Config API Port",
-      "slug": "forge-config-api-port",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "uXrWPsCu",
-      "client_tiers": null
-    },
-    {
-      "name": "Polymer",
-      "slug": "polymer",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": ""
-    },
-    {
-      "name": "MidnightLib",
-      "slug": "midnightlib",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "Also a client dependency: Cull Leaves and other client mods hard-require it, so it must stay in mods/.",
-      "client_version": "jkodor79",
-      "client_tiers": null
-    },
-    {
-      "name": "Puzzles Lib",
-      "slug": "puzzles-lib",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "xTX7sOwU",
-      "client_tiers": null
-    },
-    {
-      "name": "Universal Graves",
-      "slug": "universal-graves",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": ""
-    },
-    {
-      "name": "Repurposed Structures - Fabric",
-      "slug": "repurposed-structures-fabric",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": ""
-    },
-    {
-      "name": "FallingTree",
-      "slug": "fallingtree",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": ""
-    },
-    {
-      "name": "Just Enough Items (JEI)",
-      "slug": "jei",
-      "side": "both",
-      "type": "mod",
-      "version": "27.23.0.71",
-      "notes": "Server pinned to the client build (vyofGDrh). Unpinned, the server pulled 27.54.0.111 on 2026-10-25, which fails bytecode verification in JustEnoughItems.onInitialize and kills startup.",
-      "client_version": "vyofGDrh",
-      "client_tiers": null
-    },
-    {
-      "name": "Saturated Eating",
-      "slug": "saturated-eating",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": ""
-    },
-    {
-      "name": "Waystones",
-      "slug": "waystones",
-      "side": "both",
-      "type": "mod",
-      "version": "21.11.9+fabric-1.21.11",
-      "notes": "",
-      "client_version": "MydMW2TT",
-      "client_tiers": null
-    },
-    {
-      "name": "Traveler's Backpack",
-      "slug": "travelersbackpack",
-      "side": "both",
-      "type": "mod",
-      "version": "1.21.11-10.11.10",
-      "notes": "",
-      "client_version": "LfmQsEdR",
-      "client_tiers": null
-    },
-    {
-      "name": "Biomes O' Plenty",
-      "slug": "biomes-o-plenty",
-      "side": "both",
-      "type": "mod",
-      "version": "21.11.0.32",
-      "notes": "",
-      "client_version": "JJKbM72H",
-      "client_tiers": null
-    },
-    {
-      "name": "TerraBlender",
-      "slug": "terrablender",
-      "side": "both",
-      "type": "mod",
-      "version": "21.11.0.0",
-      "notes": "",
-      "client_version": "chxo508B",
-      "client_tiers": null
-    },
-    {
-      "name": "GlitchCore",
-      "slug": "glitchcore",
-      "side": "both",
-      "type": "mod",
-      "version": "21.11.0.4",
-      "notes": "",
-      "client_version": "CO7NeLTt",
-      "client_tiers": null
-    },
-    {
-      "name": "Storage Drawers",
-      "slug": "storagedrawers",
-      "side": "both",
-      "type": "mod",
-      "version": "1.21.11-20.0.0",
-      "notes": "",
-      "client_version": "Q9r8LMQL",
-      "client_tiers": null
-    },
-    {
-      "name": "Carry On",
-      "slug": "carry-on",
-      "side": "both",
-      "type": "mod",
-      "version": "2.9.2",
-      "notes": "",
-      "client_version": "KOFV3duz",
-      "client_tiers": null
-    },
-    {
-      "name": "Farmer's Delight Refabricated",
-      "slug": "farmers-delight-refabricated",
-      "side": "both",
-      "type": "mod",
-      "version": "1.21.11-3.6.13",
-      "notes": "",
-      "client_version": "yXs9snmN",
-      "client_tiers": null
-    },
-    {
       "name": "Adorn",
       "slug": "adorn",
       "side": "both",
       "type": "mod",
-      "version": "7.6.1-fabric",
+      "version": "QbzMhTAO",
       "notes": "",
-      "client_version": "tyOUUBLZ",
-      "client_tiers": null
-    },
-    {
-      "name": "MDM (formerly Modern Decorations Mod)",
-      "slug": "modern-decorations-mod",
-      "side": "both",
-      "type": "mod",
-      "version": "26.7.0",
-      "notes": "",
-      "client_version": "q1Kv9EdP",
-      "client_tiers": null
-    },
-    {
-      "name": "Fantastic Wings",
-      "slug": "fantastic-wings",
-      "side": "both",
-      "type": "mod",
-      "version": "21.11.1",
-      "notes": "",
-      "client_version": "5zJKhkHi",
-      "client_tiers": null
-    },
-    {
-      "name": "Towers of the Wild: Reworked",
-      "slug": "towers-of-the-wild-reworked",
-      "side": "server",
-      "type": "datapack",
-      "version": "Pr8Jhst4",
-      "notes": "Loaded as a datapack. Pin Pr8Jhst4 is Modrinth version v4.4.4."
-    },
-    {
-      "name": "Create Fly",
-      "slug": "create-fly",
-      "side": "both",
-      "type": "mod",
-      "version": "1.21.11-6.0.9-5",
-      "notes": "",
-      "client_version": "fn0H9rSj",
-      "client_tiers": null
-    },
-    {
-      "name": "CC: Tweaked",
-      "slug": "cc-tweaked",
-      "side": "both",
-      "type": "mod",
-      "version": "1.117.1",
-      "notes": "",
-      "client_version": "IikPYYtH",
-      "client_tiers": null
-    },
-    {
-      "name": "Expanded Weaponry",
-      "slug": "expanded-weaponry",
-      "side": "both",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "91zQqaH6",
+      "client_version": "QbzMhTAO",
       "client_tiers": null
     },
     {
@@ -296,52 +69,561 @@
       "slug": "animal_feeding_trough",
       "side": "both",
       "type": "mod",
-      "version": null,
+      "version": "9u4bmtUp",
       "notes": "",
-      "client_version": "aTRE6QT1",
+      "client_version": "9u4bmtUp",
       "client_tiers": null
     },
     {
-      "name": "Connectible Chains [Fabric]",
-      "slug": "connectiblechains",
+      "name": "Architectury API",
+      "slug": "architectury-api",
       "side": "both",
       "type": "mod",
-      "version": null,
+      "version": "1IiqEQGl",
       "notes": "",
-      "client_version": "h8RIIOQq",
+      "client_version": "1IiqEQGl",
       "client_tiers": null
     },
     {
-      "name": "Concurrent Chunk Management Engine (Fabric)",
-      "slug": "c2me-fabric",
-      "side": "server",
+      "name": "Armor Hider",
+      "slug": "zannaghs-armor-hider",
+      "side": "both",
       "type": "mod",
-      "version": null,
-      "notes": ""
+      "version": "F2QuCY5k",
+      "notes": "",
+      "client_version": "F2QuCY5k",
+      "client_tiers": null
+    },
+    {
+      "name": "Balm",
+      "slug": "balm",
+      "side": "both",
+      "type": "mod",
+      "version": "CquiaiDj",
+      "notes": "",
+      "client_version": "CquiaiDj",
+      "client_tiers": null
+    },
+    {
+      "name": "Biomes O' Plenty",
+      "slug": "biomes-o-plenty",
+      "side": "both",
+      "type": "mod",
+      "version": "BtZKRp69",
+      "notes": "",
+      "client_version": "BtZKRp69",
+      "client_tiers": null
+    },
+    {
+      "name": "Carry On",
+      "slug": "carry-on",
+      "side": "both",
+      "type": "mod",
+      "version": "PV8oLZ1q",
+      "notes": "",
+      "client_version": "PV8oLZ1q",
+      "client_tiers": null
+    },
+    {
+      "name": "CC: Tweaked",
+      "slug": "cc-tweaked",
+      "side": "both",
+      "type": "mod",
+      "version": "1ewzHZYg",
+      "notes": "",
+      "client_version": "1ewzHZYg",
+      "client_tiers": null
+    },
+    {
+      "name": "Cloth Config API",
+      "slug": "cloth-config",
+      "side": "both",
+      "type": "mod",
+      "version": "izKINKFg",
+      "notes": "",
+      "client_version": "izKINKFg",
+      "client_tiers": null
+    },
+    {
+      "name": "Clumps",
+      "slug": "clumps",
+      "side": "both",
+      "type": "mod",
+      "version": "jo7lDoK4",
+      "notes": "",
+      "client_version": "jo7lDoK4",
+      "client_tiers": null
+    },
+    {
+      "name": "Create",
+      "slug": "create",
+      "side": "both",
+      "type": "mod",
+      "version": "UjX6dr61",
+      "notes": "Prefix override: the derived prefix 'create-' would also claim the create-aeronautics-bundled jar.",
+      "client_version": "UjX6dr61",
+      "client_tiers": null,
+      "prefix": "create-1.21.1-"
+    },
+    {
+      "name": "Create Aeronautics",
+      "slug": "create-aeronautics",
+      "side": "both",
+      "type": "mod",
+      "version": "44pLdPGg",
+      "notes": "Official bundled jar; contains Simulated and Offroad. Sable is a separate entry.",
+      "client_version": "44pLdPGg",
+      "client_tiers": null
+    },
+    {
+      "name": "Create: Ultimate Factory",
+      "slug": "create-ultimate-factory",
+      "side": "both",
+      "type": "mod",
+      "version": "AEMRNsNS",
+      "notes": "",
+      "client_version": "AEMRNsNS",
+      "client_tiers": null
+    },
+    {
+      "name": "Creating Space",
+      "slug": "creating-space",
+      "side": "both",
+      "type": "mod",
+      "version": "MU9ngpM5",
+      "notes": "",
+      "client_version": "MU9ngpM5",
+      "client_tiers": null
+    },
+    {
+      "name": "Creeper Overhaul",
+      "slug": "creeper-overhaul",
+      "side": "both",
+      "type": "mod",
+      "version": "HNrAYCLH",
+      "notes": "",
+      "client_version": "HNrAYCLH",
+      "client_tiers": null
+    },
+    {
+      "name": "Cristel Lib",
+      "slug": "cristel-lib",
+      "side": "both",
+      "type": "mod",
+      "version": "Sduz0AWP",
+      "notes": "",
+      "client_version": "Sduz0AWP",
+      "client_tiers": null
+    },
+    {
+      "name": "Enchantments Expansion",
+      "slug": "enchantments-expansion",
+      "side": "both",
+      "type": "mod",
+      "version": "uEm4V8le",
+      "notes": "",
+      "client_version": "uEm4V8le",
+      "client_tiers": null
+    },
+    {
+      "name": "Enderite Mod",
+      "slug": "enderite-mod",
+      "side": "both",
+      "type": "mod",
+      "version": "u97vFgX6",
+      "notes": "",
+      "client_version": "u97vFgX6",
+      "client_tiers": null
+    },
+    {
+      "name": "Eunomia",
+      "slug": "eunomia",
+      "side": "both",
+      "type": "mod",
+      "version": "8WvssGZJ",
+      "notes": "",
+      "client_version": "8WvssGZJ",
+      "client_tiers": null
+    },
+    {
+      "name": "FallingTree",
+      "slug": "fallingtree",
+      "side": "both",
+      "type": "mod",
+      "version": "wxGXaJMA",
+      "notes": "",
+      "client_version": "wxGXaJMA",
+      "client_tiers": null
+    },
+    {
+      "name": "Fantastic Wings",
+      "slug": "fantastic-wings",
+      "side": "both",
+      "type": "mod",
+      "version": "hX5hYT5c",
+      "notes": "",
+      "client_version": "hX5hYT5c",
+      "client_tiers": null
+    },
+    {
+      "name": "Farmer's Delight",
+      "slug": "farmers-delight",
+      "side": "both",
+      "type": "mod",
+      "version": "XTVZDOol",
+      "notes": "",
+      "client_version": "XTVZDOol",
+      "client_tiers": null
+    },
+    {
+      "name": "FerriteCore",
+      "slug": "ferrite-core",
+      "side": "both",
+      "type": "mod",
+      "version": "x7kQWVju",
+      "notes": "",
+      "client_version": "x7kQWVju",
+      "client_tiers": null
+    },
+    {
+      "name": "Forge Config API Port",
+      "slug": "forge-config-api-port",
+      "side": "both",
+      "type": "mod",
+      "version": "tWlsPKJI",
+      "notes": "",
+      "client_version": "tWlsPKJI",
+      "client_tiers": null
+    },
+    {
+      "name": "Geckolib",
+      "slug": "geckolib",
+      "side": "both",
+      "type": "mod",
+      "version": "Grwn5rUB",
+      "notes": "",
+      "client_version": "Grwn5rUB",
+      "client_tiers": null
+    },
+    {
+      "name": "GlitchCore",
+      "slug": "glitchcore",
+      "side": "both",
+      "type": "mod",
+      "version": "S2TfWrZR",
+      "notes": "",
+      "client_version": "S2TfWrZR",
+      "client_tiers": null
+    },
+    {
+      "name": "GraveStone Mod",
+      "slug": "gravestone-mod",
+      "side": "both",
+      "type": "mod",
+      "version": "rMGJpjaM",
+      "notes": "Replaces Universal Graves (Fabric-only).",
+      "client_version": "rMGJpjaM",
+      "client_tiers": null
+    },
+    {
+      "name": "Grind enchantments",
+      "slug": "grind-enchantments",
+      "side": "both",
+      "type": "mod",
+      "version": "jUOOQMmy",
+      "notes": "",
+      "client_version": "jUOOQMmy",
+      "client_tiers": null
+    },
+    {
+      "name": "Illager Invasion",
+      "slug": "illager-invasion",
+      "side": "both",
+      "type": "mod",
+      "version": "9bEpNrvK",
+      "notes": "",
+      "client_version": "9bEpNrvK",
+      "client_tiers": null
+    },
+    {
+      "name": "Just Enough Items (JEI)",
+      "slug": "jei",
+      "side": "both",
+      "type": "mod",
+      "version": "I4sK2bv4",
+      "notes": "",
+      "client_version": "I4sK2bv4",
+      "client_tiers": null
+    },
+    {
+      "name": "Kotlin for Forge",
+      "slug": "kotlin-for-forge",
+      "side": "both",
+      "type": "mod",
+      "version": "uhJhCT7X",
+      "notes": "Replaces Fabric Language Kotlin.",
+      "client_version": "uhJhCT7X",
+      "client_tiers": null
+    },
+    {
+      "name": "Lithium",
+      "slug": "lithium",
+      "side": "both",
+      "type": "mod",
+      "version": "DDUrRVCA",
+      "notes": "",
+      "client_version": "DDUrRVCA",
+      "client_tiers": null
     },
     {
       "name": "Lithostitched",
       "slug": "lithostitched",
-      "side": "server",
+      "side": "both",
       "type": "mod",
-      "version": null,
-      "notes": ""
+      "version": "cZu4cHY3",
+      "notes": "",
+      "client_version": "cZu4cHY3",
+      "client_tiers": null
+    },
+    {
+      "name": "MDM (formerly Modern Decorations Mod)",
+      "slug": "modern-decorations-mod",
+      "side": "both",
+      "type": "mod",
+      "version": "SS4XByTj",
+      "notes": "",
+      "client_version": "SS4XByTj",
+      "client_tiers": null
+    },
+    {
+      "name": "MezzConfig",
+      "slug": "mezzconfig",
+      "side": "both",
+      "type": "mod",
+      "version": "RdGonQpr",
+      "notes": "",
+      "client_version": "RdGonQpr",
+      "client_tiers": null
+    },
+    {
+      "name": "MidnightLib",
+      "slug": "midnightlib",
+      "side": "both",
+      "type": "mod",
+      "version": "vcVnfiCM",
+      "notes": "",
+      "client_version": "vcVnfiCM",
+      "client_tiers": null
+    },
+    {
+      "name": "ModernFix",
+      "slug": "modernfix",
+      "side": "both",
+      "type": "mod",
+      "version": "ZDZENbHH",
+      "notes": "",
+      "client_version": "ZDZENbHH",
+      "client_tiers": null
+    },
+    {
+      "name": "Packet Fixer",
+      "slug": "packet-fixer",
+      "side": "both",
+      "type": "mod",
+      "version": "2C41Q8WX",
+      "notes": "",
+      "client_version": "2C41Q8WX",
+      "client_tiers": null
+    },
+    {
+      "name": "Platform",
+      "slug": "platform",
+      "side": "both",
+      "type": "mod",
+      "version": "rh4p4ixM",
+      "notes": "",
+      "client_version": "rh4p4ixM",
+      "client_tiers": null
+    },
+    {
+      "name": "Puzzles Lib",
+      "slug": "puzzles-lib",
+      "side": "both",
+      "type": "mod",
+      "version": "kmN5PWk9",
+      "notes": "",
+      "client_version": "kmN5PWk9",
+      "client_tiers": null
+    },
+    {
+      "name": "Reconnectible Chains",
+      "slug": "reconnectible-chains",
+      "side": "both",
+      "type": "mod",
+      "version": "e4yVoAvP",
+      "notes": "",
+      "client_version": "e4yVoAvP",
+      "client_tiers": null
+    },
+    {
+      "name": "Repurposed Structures - Neoforge/Forge",
+      "slug": "repurposed-structures-forge",
+      "side": "both",
+      "type": "mod",
+      "version": "8duZuWci",
+      "notes": "",
+      "client_version": "8duZuWci",
+      "client_tiers": null
+    },
+    {
+      "name": "Resourceful Config",
+      "slug": "resourceful-config",
+      "side": "both",
+      "type": "mod",
+      "version": "lSbyRD6v",
+      "notes": "",
+      "client_version": "lSbyRD6v",
+      "client_tiers": null
+    },
+    {
+      "name": "Resourceful Lib",
+      "slug": "resourceful-lib",
+      "side": "both",
+      "type": "mod",
+      "version": "x99nCLTm",
+      "notes": "",
+      "client_version": "x99nCLTm",
+      "client_tiers": null
+    },
+    {
+      "name": "Sable",
+      "slug": "sable",
+      "side": "both",
+      "type": "mod",
+      "version": "fg9dTRz9",
+      "notes": "Official Sable 2.0.6, required by Create Aeronautics.",
+      "client_version": "fg9dTRz9",
+      "client_tiers": null
+    },
+    {
+      "name": "Skin Restorer",
+      "slug": "skinrestorer",
+      "side": "both",
+      "type": "mod",
+      "version": "QFkb2iq2",
+      "notes": "",
+      "client_version": "QFkb2iq2",
+      "client_tiers": null
+    },
+    {
+      "name": "spark",
+      "slug": "spark",
+      "side": "both",
+      "type": "mod",
+      "version": "v5qtqRQi",
+      "notes": "",
+      "client_version": "v5qtqRQi",
+      "client_tiers": null
+    },
+    {
+      "name": "Storage Drawers",
+      "slug": "storagedrawers",
+      "side": "both",
+      "type": "mod",
+      "version": "px0CCB06",
+      "notes": "",
+      "client_version": "px0CCB06",
+      "client_tiers": null
+    },
+    {
+      "name": "TerraBlender",
+      "slug": "terrablender",
+      "side": "both",
+      "type": "mod",
+      "version": "6e8GCrLb",
+      "notes": "",
+      "client_version": "6e8GCrLb",
+      "client_tiers": null
     },
     {
       "name": "Terralith",
       "slug": "terralith",
-      "side": "server",
+      "side": "both",
       "type": "mod",
-      "version": null,
-      "notes": ""
+      "version": "IY93YaEe",
+      "notes": "",
+      "client_version": "IY93YaEe",
+      "client_tiers": null
     },
     {
       "name": "Towns and Towers",
       "slug": "towns-and-towers",
-      "side": "server",
-      "type": "datapack",
-      "version": null,
-      "notes": "Loaded as a datapack."
+      "side": "both",
+      "type": "mod",
+      "version": "DZxwgj6V",
+      "notes": "",
+      "client_version": "DZxwgj6V",
+      "client_tiers": null
+    },
+    {
+      "name": "Traveler's Backpack",
+      "slug": "travelersbackpack",
+      "side": "both",
+      "type": "mod",
+      "version": "ZqrwMSn5",
+      "notes": "",
+      "client_version": "ZqrwMSn5",
+      "client_tiers": null
+    },
+    {
+      "name": "Vanilla Backport",
+      "slug": "vanillabackport",
+      "side": "both",
+      "type": "mod",
+      "version": "mGS7BxD4",
+      "notes": "",
+      "client_version": "mGS7BxD4",
+      "client_tiers": null
+    },
+    {
+      "name": "Waystones",
+      "slug": "waystones",
+      "side": "both",
+      "type": "mod",
+      "version": "6Z6MQ6os",
+      "notes": "",
+      "client_version": "6Z6MQ6os",
+      "client_tiers": null
+    },
+    {
+      "name": "Weapons Expanded",
+      "slug": "weaponsexpanded",
+      "side": "both",
+      "type": "mod",
+      "version": "fV4VGLso",
+      "notes": "",
+      "client_version": "fV4VGLso",
+      "client_tiers": null
+    },
+    {
+      "name": "YetAnotherConfigLib (YACL)",
+      "slug": "yacl",
+      "side": "both",
+      "type": "mod",
+      "version": "7TVdVtxF",
+      "notes": "",
+      "client_version": "7TVdVtxF",
+      "client_tiers": null
+    },
+    {
+      "name": "YUNG's API",
+      "slug": "yungs-api",
+      "side": "both",
+      "type": "mod",
+      "version": "2prKITKh",
+      "notes": "",
+      "client_version": "2prKITKh",
+      "client_tiers": null
     },
     {
       "name": "3D Skin Layers",
@@ -350,7 +632,17 @@
       "type": "mod",
       "version": null,
       "notes": "",
-      "client_version": "3kCdl1bI",
+      "client_version": "GJTnQGfe",
+      "client_tiers": null
+    },
+    {
+      "name": "[ETF] Entity Texture Features",
+      "slug": "entitytexturefeatures",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "lwNx1nD1",
       "client_tiers": null
     },
     {
@@ -360,28 +652,332 @@
       "type": "mod",
       "version": null,
       "notes": "",
-      "client_version": "JZUqW70J",
+      "client_version": "WGalCQAo",
       "client_tiers": null
     },
     {
-      "name": "Architectury API",
-      "slug": "architectury-api",
-      "side": "both",
+      "name": "CreativeCore",
+      "slug": "creativecore",
+      "side": "client",
       "type": "mod",
       "version": null,
-      "notes": "Required by Enderite Mod, which is client_and_server -- so this library has to be on both sides, not client-only.",
-      "client_version": "uNdfrcQ8",
+      "notes": "",
+      "client_version": "vRMtFt35",
       "client_tiers": null
     },
     {
-      "name": "Cloth Config API",
-      "slug": "cloth-config",
-      "side": "both",
+      "name": "Cull Leaves",
+      "slug": "cull-leaves",
+      "side": "client",
       "type": "mod",
       "version": null,
-      "notes": "Required by Enderite Mod, which is client_and_server -- so this library has to be on both sides, not client-only.",
-      "client_version": "xuX40TN5",
+      "notes": "",
+      "client_version": "V7PU4g8I",
       "client_tiers": null
+    },
+    {
+      "name": "Entity Culling",
+      "slug": "entityculling",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "eieYbWYb",
+      "client_tiers": null
+    },
+    {
+      "name": "Fusion (Connected Textures)",
+      "slug": "fusion-connected-textures",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "Replaces Continuity (Fabric-only): connected glass and other CTM.",
+      "client_version": "AYDaLPK8",
+      "client_tiers": null
+    },
+    {
+      "name": "ImmediatelyFast",
+      "slug": "immediatelyfast",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "EJzmEPZV",
+      "client_tiers": null
+    },
+    {
+      "name": "Inventory Profiles Next",
+      "slug": "inventory-profiles-next",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "vjuNnHLv",
+      "client_tiers": null
+    },
+    {
+      "name": "Iris & Oculus Flywheel Compat",
+      "slug": "iris-flw-compat",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "6ZQz5Ow2",
+      "client_tiers": null
+    },
+    {
+      "name": "Iris Shaders",
+      "slug": "iris",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "KduFYu4t",
+      "client_tiers": null
+    },
+    {
+      "name": "Jade \ud83d\udd0d",
+      "slug": "jade",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "eYz2YBGT",
+      "client_tiers": null
+    },
+    {
+      "name": "LambDynamicLights - Dynamic Lights",
+      "slug": "lambdynamiclights",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "ksaGCvSu",
+      "client_tiers": null
+    },
+    {
+      "name": "libIPN",
+      "slug": "libipn",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "BGe4KMlE",
+      "client_tiers": null
+    },
+    {
+      "name": "Model Gap Fix",
+      "slug": "modelfix",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "X2U8ceG9",
+      "client_tiers": null
+    },
+    {
+      "name": "Presence Footsteps (NeoForge)",
+      "slug": "pf-neoforge",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "f3SxKzof",
+      "client_tiers": null
+    },
+    {
+      "name": "Reese's Sodium Options",
+      "slug": "reeses-sodium-options",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "XjF2IkL8",
+      "client_tiers": null
+    },
+    {
+      "name": "Sodium",
+      "slug": "sodium",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "uMOpc5uV",
+      "client_tiers": null
+    },
+    {
+      "name": "Sound Physics Remastered",
+      "slug": "sound-physics-remastered",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "85fA7L1W",
+      "client_tiers": null
+    },
+    {
+      "name": "Xaero's Minimap",
+      "slug": "xaeros-minimap",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "Replaces VoxelMap (Fabric-only).",
+      "client_version": "irjR7dHk",
+      "client_tiers": null
+    },
+    {
+      "name": "Xaero's World Map",
+      "slug": "xaeros-world-map",
+      "side": "client",
+      "type": "mod",
+      "version": null,
+      "notes": "",
+      "client_version": "SnQ4SoDe",
+      "client_tiers": null
+    },
+    {
+      "name": "Almanac",
+      "slug": "almanac",
+      "side": "server",
+      "type": "mod",
+      "version": "e50qrv4Z",
+      "notes": ""
+    },
+    {
+      "name": "Alternate Current",
+      "slug": "alternate-current",
+      "side": "server",
+      "type": "mod",
+      "version": "PCNyL6v4",
+      "notes": ""
+    },
+    {
+      "name": "ChoiceTheorem's Overhauled Village",
+      "slug": "ct-overhaul-village",
+      "side": "server",
+      "type": "mod",
+      "version": "ztzRUnQ7",
+      "notes": ""
+    },
+    {
+      "name": "Chunky",
+      "slug": "chunky",
+      "side": "server",
+      "type": "mod",
+      "version": "LuFhm4eU",
+      "notes": ""
+    },
+    {
+      "name": "Concurrent Chunk Management Engine (NeoForge)",
+      "slug": "c2me-neoforge",
+      "side": "server",
+      "type": "mod",
+      "version": "VACgDPOc",
+      "notes": ""
+    },
+    {
+      "name": "Fast Noise",
+      "slug": "zfastnoise",
+      "side": "server",
+      "type": "mod",
+      "version": "9vSFkDAr",
+      "notes": ""
+    },
+    {
+      "name": "Leaves Be Gone",
+      "slug": "leaves-be-gone",
+      "side": "server",
+      "type": "mod",
+      "version": "kAbmpvF3",
+      "notes": ""
+    },
+    {
+      "name": "Let Me Despawn",
+      "slug": "lmd",
+      "side": "server",
+      "type": "mod",
+      "version": "Ta6w35oG",
+      "notes": ""
+    },
+    {
+      "name": "Moog's Structure Lib (moogs_structures)",
+      "slug": "moogs-structure-lib",
+      "side": "server",
+      "type": "mod",
+      "version": "wcg4mE4e",
+      "notes": ""
+    },
+    {
+      "name": "MSS - Moog's Soaring Structures",
+      "slug": "mss-moogs-soaring-structures",
+      "side": "server",
+      "type": "mod",
+      "version": "O20bIWkj",
+      "notes": ""
+    },
+    {
+      "name": "Structure Layout Optimizer",
+      "slug": "structure-layout-optimizer",
+      "side": "server",
+      "type": "mod",
+      "version": "eTz03Gfd",
+      "notes": ""
+    },
+    {
+      "name": "Towers of the Wild: Reworked",
+      "slug": "towers-of-the-wild-reworked",
+      "side": "server",
+      "type": "datapack",
+      "version": "xGAiKHVY",
+      "notes": "Datapack, installed through the server MODRINTH_PROJECTS (datapack: token). The converted world already has it enabled."
+    },
+    {
+      "name": "When Dungeons Arise",
+      "slug": "when-dungeons-arise",
+      "side": "server",
+      "type": "mod",
+      "version": "XIRJSFQ0",
+      "notes": ""
+    },
+    {
+      "name": "When Dungeons Arise: Seven Seas",
+      "slug": "when-dungeons-arise-seven-seas",
+      "side": "server",
+      "type": "mod",
+      "version": "erk04BGa",
+      "notes": ""
+    },
+    {
+      "name": "YUNG's Better Dungeons",
+      "slug": "yungs-better-dungeons",
+      "side": "server",
+      "type": "mod",
+      "version": "D6aZn0Em",
+      "notes": ""
+    },
+    {
+      "name": "YUNG's Better Mineshafts",
+      "slug": "yungs-better-mineshafts",
+      "side": "server",
+      "type": "mod",
+      "version": "Go3nbneL",
+      "notes": ""
+    },
+    {
+      "name": "YUNG's Better Ocean Monuments",
+      "slug": "yungs-better-ocean-monuments",
+      "side": "server",
+      "type": "mod",
+      "version": "yFjEcj2g",
+      "notes": ""
+    },
+    {
+      "name": "YUNG's Better Strongholds",
+      "slug": "yungs-better-strongholds",
+      "side": "server",
+      "type": "mod",
+      "version": "8U0dIfSM",
+      "notes": ""
     },
     {
       "name": "Complementary Shaders - Unbound",
@@ -394,126 +990,6 @@
       "client_tiers": null
     },
     {
-      "name": "Continuity",
-      "slug": "continuity",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "Its built-in \"Default Connected Textures\" pack (continuity:default) gives seamless glass that keeps vanilla's per-block glint; the installers enable it in options.txt on every tier whose connected_textures is on.",
-      "client_version": "mX1iknM1",
-      "client_tiers": null
-    },
-    {
-      "name": "CreativeCore",
-      "slug": "creativecore",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "jyLHWJlj",
-      "client_tiers": null
-    },
-    {
-      "name": "Cull Leaves",
-      "slug": "cull-leaves",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "yrL6pwHZ",
-      "client_tiers": null
-    },
-    {
-      "name": "[ETF] Entity Texture Features",
-      "slug": "entitytexturefeatures",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "9uQFLvtW",
-      "client_tiers": null
-    },
-    {
-      "name": "Fabric Language Kotlin",
-      "slug": "fabric-language-kotlin",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "bdhiINYC",
-      "client_tiers": null
-    },
-    {
-      "name": "ImmediatelyFast",
-      "slug": "immediatelyfast",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "4EwhsTu7",
-      "client_tiers": null
-    },
-    {
-      "name": "Inventory Profiles Next",
-      "slug": "inventory-profiles-next",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "YKjWPbto",
-      "client_tiers": null
-    },
-    {
-      "name": "Iris Shaders",
-      "slug": "iris",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "Shader loader. Every tier. Hard-pins Sodium 0.8.7.",
-      "client_version": "fDpuVzVr",
-      "client_tiers": null
-    },
-    {
-      "name": "Jade \ud83d\udd0d",
-      "slug": "jade",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "swJhAyak",
-      "client_tiers": null
-    },
-    {
-      "name": "LambDynamicLights - Dynamic Lights",
-      "slug": "lambdynamiclights",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "5Tp7kdU0",
-      "client_tiers": null
-    },
-    {
-      "name": "libIPN",
-      "slug": "libipn",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "ByG214OZ",
-      "client_tiers": null
-    },
-    {
-      "name": "Presence Footsteps",
-      "slug": "presence-footsteps",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "xjmToylJ",
-      "client_tiers": null
-    },
-    {
       "name": "PresenceFootsteps: Remastered Sounds Pack",
       "slug": "presense-footsteps-sounds",
       "side": "client",
@@ -521,162 +997,6 @@
       "version": null,
       "notes": "Sound pack for Presence Footsteps. Installed to resourcepacks/ and enabled in options.txt.",
       "client_version": "yAgMm4Uo",
-      "client_tiers": null
-    },
-    {
-      "name": "Sodium",
-      "slug": "sodium",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "The Sodium build Iris 1.10.7 hard-pins. Every tier runs Iris, so this is the only Sodium build shipped -- there is no second entry.",
-      "client_version": "UddlN6L4",
-      "client_tiers": null
-    },
-    {
-      "name": "Sound Physics Remastered",
-      "slug": "sound-physics-remastered",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "pfqxi9qs",
-      "client_tiers": null
-    },
-    {
-      "name": "VoxelMap-Updated",
-      "slug": "voxelmap-updated",
-      "side": "client",
-      "type": "mod",
-      "version": null,
-      "notes": "",
-      "client_version": "tRdGJKGE",
-      "client_tiers": null
-    },
-    {
-      "name": "Enderite Mod",
-      "slug": "enderite-mod",
-      "side": "both",
-      "type": "mod",
-      "version": "1.8.2",
-      "notes": "Adds Enderite ore/tools/armour above Netherite. A content mod, so both sides pin the same build. Requires Fabric API, Architectury API (>=19.0.1) and Cloth Config (>=21.11.151); the latter two were client-only before this entry.",
-      "client_version": "VJqLE3Ux",
-      "client_tiers": null
-    },
-    {
-      "name": "Grind Enchantments",
-      "slug": "grind-enchantments",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": "Moves enchantments to books / disenchants items via the grindstone. Server-side only (client optional). The one Fabric 1.21.11 build is 4.1.0+1.21.11-pre2, a release that declares 1.21.11. Requires Fabric API."
-    },
-    {
-      "name": "SkinRestorer",
-      "slug": "skinrestorer",
-      "side": "server",
-      "type": "mod",
-      "version": null,
-      "notes": "Lets players set/restore skins server-side (/skin). Server-only (client unsupported). Fabric API is optional."
-    },
-    {
-      "name": "Eunomia",
-      "slug": "eunomia",
-      "side": "both",
-      "type": "mod",
-      "version": "fab-mc-1.21.11-0.3.14",
-      "notes": "Library required by Armor Hider, so it has to be on both sides with it.",
-      "client_version": "ddaTv326",
-      "client_tiers": null
-    },
-    {
-      "name": "Armor Hider",
-      "slug": "zannaghs-armor-hider",
-      "side": "both",
-      "type": "mod",
-      "version": "fab-mc-1.21.11-0.14.4",
-      "notes": "Per-slot armour opacity/hiding. Client-required; also on the server so hidden-armour settings sync to other players. Requires Eunomia.",
-      "client_version": "fih8h6pP",
-      "client_tiers": null
-    },
-    {
-      "name": "Create: Ultimate Factory",
-      "slug": "create-ultimate-factory",
-      "side": "both",
-      "type": "mod",
-      "version": "2.2.4",
-      "notes": "Create addon; requires Create Fly (Modrinth dependency). Server and client pinned to the same build (2.2.4 = dPv5H31a).",
-      "client_version": "dPv5H31a",
-      "client_tiers": null
-    },
-    {
-      "name": "Sable",
-      "slug": "sable",
-      "side": "both",
-      "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.28/sable-fabric-1.21.11-2.0.6%2Bmc1.21.11-port.3.jar",
-      "sha256": "5ef7376e922097385a00ed1f1320bf521814ac3aa4fc126ecb47edb88498a511",
-      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.28: arrows no longer fling ships away; Iris fix from v2026.10.27), not on Modrinth. Physics engine for Create Simulated/Aeronautics; needs Forge Config API Port. Tries UDP for ship sync and falls back to TCP, so lazymc (TCP only) is fine.",
-      "client_tiers": null
-    },
-    {
-      "name": "Create Simulated",
-      "slug": "simulated",
-      "side": "both",
-      "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.25/simulated-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.1.jar",
-      "sha256": "bc3d92507df9ec22d62311b31c24088e8a4a9c6fe528bc11d9906dacbed2f77d",
-      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.25), not on Modrinth. Requires Create Fly >= 6.0.9 and Sable. port.1 fixes a dedicated-server crash when a tilted ship cannot be disassembled.",
-      "client_tiers": null
-    },
-    {
-      "name": "Create Aeronautics",
-      "slug": "aeronautics",
-      "side": "both",
-      "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.25/aeronautics-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.2.jar",
-      "sha256": "9ab6b00af3dd4ab54800b3c72777164d336850f8d9135c3f81d3317878ff8ea9",
-      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.25), not on Modrinth. Requires Create Fly >= 6.0.9, Sable and Create Simulated. port.2 fixes the client crash with a heated balloon in view; port.1 fixed the hot air burner server crash. Release recommends >= 3 GB client RAM (dalit runs -Xmx3G).",
-      "client_tiers": null
-    },
-    {
-      "name": "Create Offroad",
-      "slug": "offroad",
-      "side": "both",
-      "type": "mod",
-      "url": "https://github.com/KiraKami-dev/minecraft-create-fly/releases/download/v2026.10.28.1/offroad-fabric-1.21.11-1.3.2%2Bmc1.21.11-port.1.jar",
-      "sha256": "44fd389deb6d02bfc557b63e0b0f486c2d1aa88f95f525276c3591bd0510d2be",
-      "notes": "Unofficial Fabric port (KiraKami-dev/minecraft-create-fly v2026.10.28.1), not on Modrinth. Wheels for land vehicles (wheel mount + tires), rock cutting wheel, borehead bearing. Requires Create Fly >= 6.0.9, Sable and Create Simulated.",
-      "client_tiers": null
-    },
-    {
-      "name": "Weapons Expanded",
-      "slug": "weaponsexpanded",
-      "side": "both",
-      "type": "mod",
-      "version": "1.9.3.1",
-      "notes": "New weapons, enchantments, effects. Requires Fabric API. Server and client pinned to the same build (1.9.3.1 = YbBlMo0T).",
-      "client_version": "YbBlMo0T",
-      "client_tiers": null
-    },
-    {
-      "name": "Enchantments Expansion",
-      "slug": "enchantments-expansion",
-      "side": "both",
-      "type": "mod",
-      "version": "v1.2.0+mod",
-      "notes": "Vanilla-style enchantments; the Fabric mod build of the data pack. Server-side logic; on clients it supplies the enchantment names. Pinned (v1.2.0+mod = kjzZws3E).",
-      "client_version": "kjzZws3E",
-      "client_tiers": null
-    },
-    {
-      "name": "Extended Vanilla Endgame",
-      "slug": "extended-vanilla-endgame",
-      "side": "both",
-      "type": "mod",
-      "version": "1.0.0+mc1.21.11",
-      "notes": "Endgame content. Requires Fabric API. Server and client pinned to the same build (1.0.0+mc1.21.11 = 34LdDDWF).",
-      "client_version": "34LdDDWF",
       "client_tiers": null
     }
   ]
