@@ -227,6 +227,11 @@ bucket is empty, start the stack directly with: docker compose up -d"
   fi
 fi
 
+# --- world version guard ----------------------------------------------------------
+# After the restore, so a restored Fabric 1.21.11 snapshot is refused too: NeoForge
+# 1.21.1 must never open it (see check-world). Nothing has been started yet.
+sh ./check-world || exit 1
+
 # --- step 5: start ----------------------------------------------------------------
 log "[5/5] Starting containers (compose up -d)..."
 compose up -d

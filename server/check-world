@@ -1,0 +1,47 @@
+#!/bin/sh
+# Refuse to start NeoForge 1.21.1 on a world that is newer than 1.21.1.
+#
+# Minecraft 1.21.1 is DataVersion 3955. The Fabric 1.21.11 world is 4671 and must be
+# converted with https://github.com/KiraKami-dev/minecraft-1.21.1-backport (see its
+# docs/BACKPORT.md) BEFORE this server opens it: a 1.21.1 server that loads a newer
+# world can corrupt it. `restart` and `bootstrap` run this before every `compose up`.
+#
+# Exit 0: no ./data/world/level.dat yet (a new world), or DataVersion <= 3955.
+# Exit 1: DataVersion > 3955, or level.dat cannot be read (fail closed).
+#
+# level.dat is gzipped NBT. DataVersion is a TAG_Int, so in the decompressed bytes it
+# is: 0x03, name length 0x000b, "DataVersion", then 4 bytes big-endian. POSIX sh,
+# gzip, od, tr, sed -- no python3.
+set -eu
+
+MAX_DATA_VERSION=3955
+LEVEL_DAT="${1:-data/world/level.dat}"
+
+case "$0" in
+  */*) cd "$(dirname "$0")" ;;
+esac
+
+[ -f "$LEVEL_DAT" ] || exit 0
+
+HEX="$(gzip -dc "$LEVEL_DAT" 2>/dev/null | od -An -v -tx1 | tr -d ' \n' || true)"
+DV_HEX="$(printf '%s' "$HEX" | sed -n 's/.*03000b4461746156657273696f6e\(........\).*/\1/p')"
+
+if [ -z "$DV_HEX" ]; then
+  printf 'ERROR: could not read DataVersion from %s. Refusing to start the server on a world it cannot identify.\n' "$LEVEL_DAT" >&2
+  exit 1
+fi
+
+DV="$(printf '%d' "0x$DV_HEX")"
+if [ "$DV" -gt "$MAX_DATA_VERSION" ]; then
+  cat >&2 <<MSG
+ERROR: refusing to start. $LEVEL_DAT has DataVersion $DV, newer than Minecraft 1.21.1
+(DataVersion $MAX_DATA_VERSION). This world is from the Fabric 1.21.11 server and has to be
+converted first, or NeoForge 1.21.1 can corrupt it.
+
+Convert it with https://github.com/KiraKami-dev/minecraft-1.21.1-backport
+(docs/BACKPORT.md), put the converted world in server/data/world, then run this again.
+The cutover steps are in server/README.md ("Cutting over from Fabric 1.21.11").
+MSG
+  exit 1
+fi
+exit 0

@@ -93,6 +93,11 @@ rcon() {
 [ -f "./.env" ] || die "./.env is missing. Run: cp .env.example .env  and set RCON_PASSWORD before starting the server."
 [ -f "./mods.generated.env" ] || die "./mods.generated.env is missing. Generate it from ../mods.json with ../scripts/generate."
 
+# --- world version guard ----------------------------------------------------------
+# NeoForge 1.21.1 must never open the Fabric 1.21.11 world (see check-world). Checked
+# before anything is saved or stopped, so a refusal leaves the running stack alone.
+sh ./check-world || exit 1
+
 # --- step 1: save the world -------------------------------------------------------
 # Is the mc container actually running? A restart after a crash or on a fresh clone
 # is legitimate, so "not running" is not an error -- just skip the save.
