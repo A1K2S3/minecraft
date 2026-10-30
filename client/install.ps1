@@ -1,6 +1,6 @@
 <#
-Fabric Friends Client Pack installer for Minecraft 1.21.11 / Fabric loader 0.19.3
-PowerShell 5.1 compatible. No Java required at any point.
+NeoForge Friends Client Pack installer for Minecraft 1.21.1 / NeoForge 21.1.265
+PowerShell 5.1 compatible. Java 21 is needed once, to run the official NeoForge installer.
 
 A tier is REQUIRED: -dalit (bare minimum), -pandit (medium), or -modi (high).
 Every file is downloaded from the Modrinth CDN and verified by SHA-256.
@@ -17,11 +17,15 @@ param(
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$FabricMcVersion = "1.21.11"
-$FabricLoaderVersion = "0.19.3"
-$FabricLoaderId = "fabric-loader-$FabricLoaderVersion-$FabricMcVersion"
+$McVersion = "1.21.1"
+$NeoForgeVersion = "21.1.265"
+$NeoForgeId = "neoforge-$NeoForgeVersion"
 $VersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
-$FabricProfileUrl = "https://meta.fabricmc.net/v2/versions/loader/$FabricMcVersion/$FabricLoaderVersion/profile/json"
+$NeoForgeInstallerName = "neoforge-$NeoForgeVersion-installer.jar"
+$NeoForgeInstallerUrl = "https://maven.neoforged.net/releases/net/neoforged/neoforge/$NeoForgeVersion/$NeoForgeInstallerName"
+# SHA-256 of the installer jar above (maven.neoforged.net publishes the same value in
+# <installer>.jar.sha256). Changing NeoForgeVersion means changing this too.
+$NeoForgeInstallerSha256 = "a547ccc30a80a675d1c61d04b55d10c45c39a86971e09731482c50a24399d1a2"
 
 # --- manifest resolution ---
 # mods.generated.tsv (the mod/resourcepack/shaderpack table) and purge.generated.txt
@@ -249,7 +253,7 @@ function Set-LambdynLightsOff($path) {
 }
 
 # Ensure a pack id is present in options.txt's resourcePacks list (a JSON array),
-# preserving any packs the friend already enabled. Minecraft 1.21.11 references a
+# preserving any packs the friend already enabled. Minecraft 1.21.1 references a
 # resourcepacks\ file as "file/<filename>" (the "file/" prefix is confirmed present
 # in the vanilla client's resource-pack class).
 function Enable-Resourcepack($path, $id) {
@@ -278,6 +282,54 @@ function Enable-Resourcepack($path, $id) {
     [System.IO.File]::WriteAllText($path, ($out -join "`n") + "`n", $Utf8NoBom)
 }
 
+# --- helper: find a Java 21+ runtime (the NeoForge installer needs one) ---
+# Get-JavaMajor returns the major version of a java binary, or 0 if it cannot be run.
+# "java -version" prints to stderr, which under $ErrorActionPreference = 'Stop' would
+# throw in PowerShell 5.1, so Continue is set for the call.
+function Get-JavaMajor($java) {
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        foreach ($l in @(& $java -version 2>&1 | ForEach-Object { "$_" })) {
+            if ($l -match 'version "(\d+)(?:\.(\d+))?') {
+                if ($Matches[1] -eq '1') { return [int]$Matches[2] }
+                return [int]$Matches[1]
+            }
+        }
+    } catch {
+    } finally {
+        $ErrorActionPreference = $old
+    }
+    return 0
+}
+
+# Find-Java21 returns the path of the first java.exe that is 21 or newer, else $null.
+# Order: JAVA_HOME, PATH, common JDK folders, then the runtime the Minecraft launcher
+# bundles for 1.21 (java-runtime-delta is Java 21).
+function Find-Java21($GameDir) {
+    $cands = New-Object System.Collections.Generic.List[string]
+    if ($env:JAVA_HOME) { $cands.Add((Join-Path $env:JAVA_HOME "bin\java.exe")) }
+    $cmd = Get-Command java -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { $cands.Add($cmd.Source) }
+    $patterns = @(
+        "$env:ProgramFiles\Eclipse Adoptium\*\bin\java.exe",
+        "$env:ProgramFiles\Java\*\bin\java.exe",
+        "$env:ProgramFiles\Microsoft\*\bin\java.exe",
+        "$env:ProgramFiles\Zulu\*\bin\java.exe",
+        "$env:ProgramFiles\Amazon Corretto\*\bin\java.exe",
+        "$GameDir\runtime\java-runtime-*\*\java-runtime-*\bin\java.exe",
+        "$env:LOCALAPPDATA\Packages\Microsoft.4297127D64EC6_*\LocalCache\Local\runtime\java-runtime-*\*\java-runtime-*\bin\java.exe"
+    )
+    foreach ($pat in $patterns) {
+        foreach ($f in @(Get-ChildItem -Path $pat -File -ErrorAction SilentlyContinue)) { $cands.Add($f.FullName) }
+    }
+    foreach ($c in $cands) {
+        if (-not (Test-Path -LiteralPath $c -PathType Leaf)) { continue }
+        if ((Get-JavaMajor $c) -ge 21) { return $c }
+    }
+    return $null
+}
+
 # --- tier selection (mutually exclusive, REQUIRED) ---
 $Tier = ""
 $TierCount = 0
@@ -296,8 +348,8 @@ if ($Tier -eq "") {
 # --- per-tier settings ---
 # All tiers install every mod jar and the resourcepack the manifest marks active for
 # them; tiers differ in the shader stack and written config. options.txt / .properties
-# booleans are strings; JSON booleans are [bool]. Whether a tier gets Iris + the Sodium
-# 0.8.7 swap is derived from the manifest below ($HasShaders), not set here.
+# booleans are strings; JSON booleans are [bool]. Whether a tier gets Iris + Sodium
+# is derived from the manifest below ($HasShaders), not set here.
 if ($Tier -eq "dalit") {
     $T_RenderDistance = 5;  $T_SimDistance = 5;  $T_Graphics = 0; $T_Particles = 2
     $T_Mipmap = 0;          $T_BiomeBlend = 0;   $T_MaxFps = 60
@@ -306,7 +358,6 @@ if ($Tier -eq "dalit") {
     $T_CompProfile = "POTATO"
     $T_SoundPhysics = "false"
     $T_Lambdyn = "fastest"
-    $T_Continuity = $false
     $T_Skinlayers = $false
     $T_SodiumAnimateVisibleOnly = $true
     $T_SodiumRenderAhead = 0
@@ -318,7 +369,6 @@ if ($Tier -eq "dalit") {
     $T_CompProfile = "MEDIUM"
     $T_SoundPhysics = "true"
     $T_Lambdyn = "fancy"
-    $T_Continuity = $true
     $T_Skinlayers = $true
     $T_SodiumAnimateVisibleOnly = $true
     $T_SodiumRenderAhead = 2
@@ -330,7 +380,6 @@ if ($Tier -eq "dalit") {
     $T_CompProfile = "HIGH"
     $T_SoundPhysics = "true"
     $T_Lambdyn = "fancy"
-    $T_Continuity = $true
     $T_Skinlayers = $true
     $T_SodiumAnimateVisibleOnly = $false
     $T_SodiumRenderAhead = 3
@@ -345,17 +394,22 @@ $TargetDir = $Dir
 if (-not (Test-Path -Path $TargetDir)) {
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
     Write-Warn2 "Game directory did not exist and was created at: $TargetDir"
-    Write-Warn2 "Please launch vanilla $FabricMcVersion once from your launcher first so assets download, then re-run this installer."
+    Write-Warn2 "Please launch vanilla $McVersion once from your launcher first so assets download, then re-run this installer."
 }
 
 Write-Log "[0/8] Using game directory: $TargetDir"
+
+# versions\neoforge-<v>\neoforge-<v>.json exists once the NeoForge installer has run.
+# Its absence marks the first NeoForge install into this game directory (migration).
+$NeoForgeVersionJson = Join-Path $TargetDir "versions\$NeoForgeId\$NeoForgeId.json"
+$LauncherProfilesPath = Join-Path $TargetDir "launcher_profiles.json"
 
 $ModsDir = Join-Path $TargetDir "mods"
 if (-not (Test-Path -Path $ModsDir)) {
     New-Item -ItemType Directory -Force -Path $ModsDir | Out-Null
 }
 
-$TempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("fabric-friends-installer-" + [System.Guid]::NewGuid().ToString("N"))
+$TempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("neoforge-friends-installer-" + [System.Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 
 # --- resolve + parse the generated manifest (single source of truth) ---
@@ -400,6 +454,34 @@ $ShaderpackZip = @($ActiveRows | Where-Object { $_.Dest -eq "shaderpacks" } | Fo
 $ActiveResourcepacks = @($ActiveRows | Where-Object { $_.Dest -eq "resourcepacks" } | ForEach-Object { $_.File })
 $ActiveModsFiles = @($ActiveRows | Where-Object { $_.Dest -eq "mods" } | ForEach-Object { $_.File })
 
+# --- migration: the first NeoForge install into this game directory ---
+# An existing mods\ (the old Fabric 1.21.11 pack) is no use to NeoForge, and a leftover
+# Fabric jar can stop it starting. So, before anything is deleted: copy mods\ and config\
+# to timestamped folders, then drop every jar the manifest does not name (the generated
+# purge list below only knows the jars this pack ever shipped, not what a friend added).
+# Later runs find the NeoForge version already installed and skip all of this.
+if (-not (Test-Path -LiteralPath $NeoForgeVersionJson)) {
+    Write-Log "First NeoForge install here: backing up mods\ and config\ before touching them..."
+    $BackupStamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $ConfigDir = Join-Path $TargetDir "config"
+    if (@(Get-ChildItem -LiteralPath $ModsDir -Force -ErrorAction SilentlyContinue).Count -gt 0) {
+        Copy-Item -Recurse -LiteralPath $ModsDir -Destination (Join-Path $TargetDir "mods-backup-$BackupStamp")
+        Write-Log "Backed up mods\ to mods-backup-$BackupStamp"
+    }
+    if ((Test-Path -LiteralPath $ConfigDir -PathType Container) -and (@(Get-ChildItem -LiteralPath $ConfigDir -Force -ErrorAction SilentlyContinue).Count -gt 0)) {
+        Copy-Item -Recurse -LiteralPath $ConfigDir -Destination (Join-Path $TargetDir "config-backup-$BackupStamp")
+        Write-Log "Backed up config\ to config-backup-$BackupStamp"
+    }
+    Get-ChildItem -Path $ModsDir -Filter "*.jar" -File -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.Name -like "tl_skin_cape*.jar") { return }
+        if ($ActiveModsFiles -notcontains $_.Name) {
+            Write-Log "Removing jar that is not part of the NeoForge pack: $($_.Name)"
+            Remove-Item -Force $_.FullName
+        }
+    }
+    Remove-Item -Force -LiteralPath (Join-Path $ConfigDir "fabric_loader_dependencies.json") -ErrorAction SilentlyContinue
+}
+
 # --- reconcile the mods\ directory with this tier BEFORE anything downloads or the
 # duplicate check runs, so switching tiers never leaves an inactive or stale jar
 # behind. "side" in mods.json decides server-only removal (step [4/8]); the per-mod
@@ -412,7 +494,7 @@ foreach ($row in $InactiveMods) {
         Remove-Item -Force -LiteralPath $p
     }
 }
-# 2. Any prefix owned by an INACTIVE row but NOT by any ACTIVE row (e.g. iris-fabric-
+# 2. Any prefix owned by an INACTIVE row but NOT by any ACTIVE row (e.g. iris-neoforge-
 # when this tier has no shaders) has every matching jar removed -- this also clears an
 # Iris/Sodium left behind at a DIFFERENT version than the one currently pinned.
 $ActiveModsPrefixes = @($ActiveRows | Where-Object { $_.Dest -eq "mods" } | ForEach-Object { $_.Prefix })
@@ -440,23 +522,23 @@ foreach ($row in ($ActiveRows | Where-Object { $_.Dest -eq "mods" })) {
 try {
 
     # --- A/B: vanilla base version ---
-    $VersionDir = Join-Path $TargetDir "versions\$FabricMcVersion"
-    $VersionJson = Join-Path $VersionDir "$FabricMcVersion.json"
-    $VersionJar = Join-Path $VersionDir "$FabricMcVersion.jar"
+    $VersionDir = Join-Path $TargetDir "versions\$McVersion"
+    $VersionJson = Join-Path $VersionDir "$McVersion.json"
+    $VersionJar = Join-Path $VersionDir "$McVersion.jar"
 
     if ((Test-Path $VersionJson) -and (Test-Path $VersionJar)) {
-        Write-Log "[1/8] Vanilla $FabricMcVersion base version already present, skipping."
+        Write-Log "[1/8] Vanilla $McVersion base version already present, skipping."
     } else {
-        Write-Log "[1/8] Installing vanilla $FabricMcVersion base version..."
+        Write-Log "[1/8] Installing vanilla $McVersion base version..."
         New-Item -ItemType Directory -Force -Path $VersionDir | Out-Null
 
         $ManifestPath = Join-Path $TempDir "version_manifest_v2.json"
         Invoke-Download -Url $VersionManifestUrl -Dest $ManifestPath
 
         $ManifestData = Get-Content -Raw -Path $ManifestPath | ConvertFrom-Json
-        $VersionEntry = $ManifestData.versions | Where-Object { $_.id -eq $FabricMcVersion } | Select-Object -First 1
+        $VersionEntry = $ManifestData.versions | Where-Object { $_.id -eq $McVersion } | Select-Object -First 1
         if ($null -eq $VersionEntry) {
-            Fail "Could not find version $FabricMcVersion in $VersionManifestUrl"
+            Fail "Could not find version $McVersion in $VersionManifestUrl"
         }
 
         Invoke-Download -Url $VersionEntry.url -Dest $VersionJson
@@ -479,39 +561,43 @@ try {
             Remove-Item -Force $VersionJar
             Fail "SHA-1 mismatch for $VersionJar : expected $ClientSha1, got $ActualSha1"
         }
-        Write-Log "Vanilla $FabricMcVersion client jar verified."
+        Write-Log "Vanilla $McVersion client jar verified."
     }
 
-    # --- C: fabric loader profile ---
-    Write-Log "[2/8] Installing Fabric loader profile ($FabricLoaderId)..."
-    $ProfileJsonPath = Join-Path $TempDir "fabric_profile.json"
-    Invoke-Download -Url $FabricProfileUrl -Dest $ProfileJsonPath
-
-    $ProfileRaw = Get-Content -Raw -Path $ProfileJsonPath
-    if ($ProfileRaw -notmatch '"inheritsFrom"') {
-        Fail "Fabric profile response missing `"inheritsFrom`": $FabricProfileUrl"
+    # --- C: NeoForge ---
+    # The official installer does the work: --install-client writes versions\neoforge-<v>\,
+    # its libraries, and a launcher profile. TLauncher only needs the version folder.
+    Write-Log "[2/8] Installing NeoForge $NeoForgeVersion ($NeoForgeId)..."
+    $ProfileId = $NeoForgeId
+    if (Test-Path -LiteralPath $NeoForgeVersionJson) {
+        Write-Log "NeoForge $NeoForgeVersion already installed, skipping."
+    } elseif ($env:MCF_SKIP_LOADER_INSTALL -eq "1") {
+        # Testing only (dry runs on a throwaway directory). Never set this for real players.
+        Write-Warn2 "MCF_SKIP_LOADER_INSTALL=1: NOT installing NeoForge."
+    } else {
+        $JavaBin = Find-Java21 $TargetDir
+        if (-not $JavaBin) {
+            Fail ("Java 21 or newer is required to install NeoForge, and none was found.`n" +
+                  "Install it, then re-run this installer:`n" +
+                  "  https://adoptium.net/temurin/releases/?version=21  (pick the JRE or JDK, 21, Windows x64 .msi)`n" +
+                  "  or: winget install EclipseAdoptium.Temurin.21.JRE`n" +
+                  "Or start Minecraft 1.21.1 once from the official launcher (it downloads a Java 21 runtime) and re-run.")
+        }
+        Write-Log "Using Java: $JavaBin"
+        Invoke-DownloadVerify $NeoForgeInstallerName $NeoForgeInstallerSha256 $NeoForgeInstallerUrl $TempDir
+        # The installer wants an existing launcher_profiles.json (a fresh .minecraft has none).
+        if (-not (Test-Path -LiteralPath $LauncherProfilesPath)) {
+            [System.IO.File]::WriteAllText($LauncherProfilesPath, '{"profiles":{},"settings":{},"version":3}' + "`n", $Utf8NoBom)
+        }
+        $InstallerPath = Join-Path $TempDir $NeoForgeInstallerName
+        $proc = Start-Process -FilePath $JavaBin -ArgumentList @("-jar", "`"$InstallerPath`"", "--install-client", "`"$TargetDir`"") -Wait -NoNewWindow -PassThru
+        if ($proc.ExitCode -ne 0) { Fail "The NeoForge installer failed (exit code $($proc.ExitCode)). See its output above." }
+        if (-not (Test-Path -LiteralPath $NeoForgeVersionJson)) { Fail "The NeoForge installer finished but $NeoForgeVersionJson is missing." }
+        Write-Log "NeoForge $NeoForgeVersion installed to versions\$NeoForgeId\"
     }
-    if ($ProfileRaw -notmatch [regex]::Escape("net.fabricmc.loader.impl.launch.knot.KnotClient")) {
-        Fail "Fabric profile response missing KnotClient main class: $FabricProfileUrl"
-    }
-
-    $ProfileData = $ProfileRaw | ConvertFrom-Json
-    $ProfileId = $ProfileData.id
-    if ([string]::IsNullOrEmpty($ProfileId)) {
-        Fail "Could not read id from Fabric profile response"
-    }
-    if ($ProfileId -ne $FabricLoaderId) {
-        Write-Warn2 "Fabric profile id ($ProfileId) differs from expected ($FabricLoaderId); continuing with actual id."
-    }
-
-    $FabricVersionDir = Join-Path $TargetDir "versions\$ProfileId"
-    New-Item -ItemType Directory -Force -Path $FabricVersionDir | Out-Null
-    Copy-Item -Force -Path $ProfileJsonPath -Destination (Join-Path $FabricVersionDir "$ProfileId.json")
-    Write-Log "Fabric loader profile written to versions\$ProfileId\$ProfileId.json"
 
     # --- D: launcher_profiles.json ---
     Write-Log "[3/8] Registering launcher profile..."
-    $LauncherProfilesPath = Join-Path $TargetDir "launcher_profiles.json"
 
     # The tier's RAM allocation goes in the profile's javaArgs field (the launcher
     # otherwise applies its own default JVM args).
@@ -529,24 +615,24 @@ try {
         }
 
         # Preserve any other fields on our profile object; only our known keys are authoritative.
-        if ($LauncherData.profiles.PSObject.Properties.Name -contains "fabric-loader-1.21.11") {
-            $NewProfile = $LauncherData.profiles."fabric-loader-1.21.11"
+        if ($LauncherData.profiles.PSObject.Properties.Name -contains $ProfileId) {
+            $NewProfile = $LauncherData.profiles.$ProfileId
         } else {
             $NewProfile = New-Object PSObject
         }
         if (-not ($NewProfile.PSObject.Properties.Name -contains "created")) {
             $NewProfile | Add-Member -MemberType NoteProperty -Name "created" -Value "2026-08-11T00:00:00.000Z" -Force
         }
-        $NewProfile | Add-Member -MemberType NoteProperty -Name "name" -Value "fabric-loader-1.21.11" -Force
+        $NewProfile | Add-Member -MemberType NoteProperty -Name "name" -Value $ProfileId -Force
         $NewProfile | Add-Member -MemberType NoteProperty -Name "type" -Value "custom" -Force
         $NewProfile | Add-Member -MemberType NoteProperty -Name "lastVersionId" -Value $ProfileId -Force
         $NewProfile | Add-Member -MemberType NoteProperty -Name "icon" -Value "TNT" -Force
         $NewProfile | Add-Member -MemberType NoteProperty -Name "javaArgs" -Value $JavaArgs -Force
 
-        if ($LauncherData.profiles.PSObject.Properties.Name -contains "fabric-loader-1.21.11") {
-            $LauncherData.profiles."fabric-loader-1.21.11" = $NewProfile
+        if ($LauncherData.profiles.PSObject.Properties.Name -contains $ProfileId) {
+            $LauncherData.profiles.$ProfileId = $NewProfile
         } else {
-            $LauncherData.profiles | Add-Member -MemberType NoteProperty -Name "fabric-loader-1.21.11" -Value $NewProfile -Force
+            $LauncherData.profiles | Add-Member -MemberType NoteProperty -Name $ProfileId -Value $NewProfile -Force
         }
 
         ($LauncherData | ConvertTo-Json -Depth 10) | Set-Content -Path $LauncherProfilesPath -Encoding UTF8
@@ -574,6 +660,8 @@ try {
         }
         $found = Get-ChildItem -Path $ModsDir -Filter "$prefix*" -File -ErrorAction SilentlyContinue
         foreach ($m in $found) {
+            # Never delete a jar this tier installs (Windows matches prefixes case-insensitively).
+            if ($ActiveModsFiles -contains $m.Name) { continue }
             Write-Log "Removing server-only jar: $($m.Name)"
             Remove-Item -Force $m.FullName
         }
@@ -598,7 +686,7 @@ try {
     }
 
     if ($HasShaders) {
-        Write-Log "Shaders installed for '$Tier': Iris, Sodium 0.8.7, Complementary Unbound (shaderpacks\$ShaderpackZip)."
+        Write-Log "Shaders installed for '$Tier': Iris, Sodium, Complementary Unbound (shaderpacks\$ShaderpackZip)."
     }
 
     # --- G: remove the retired modflared (Cloudflare tunnel) config ---
@@ -668,19 +756,6 @@ try {
     Merge-KvFile $SoundPhysicsProps "=" ([ordered]@{ "enabled" = $T_SoundPhysics })
     Write-Log "config\soundphysics.properties ($Tier, $spAction): enabled=$T_SoundPhysics"
 
-    # Continuity -- config\continuity.json. "off" disables connected + emissive textures.
-    $ContinuityJson = Join-Path $TargetDir "config\continuity.json"
-    $contAction = Get-ConfigAction $ContinuityJson
-    Merge-JsonFile $ContinuityJson @{ connected_textures = $T_Continuity; emissive_textures = $T_Continuity }
-    Write-Log "config\continuity.json ($Tier, $contAction): connected_textures=$T_Continuity emissive_textures=$T_Continuity"
-    # Continuity ships its own connected-textures pack (seamless glass that keeps the
-    # vanilla glint) as a Fabric built-in pack, off until listed in resourcePacks.
-    # Its id is the Identifier string Fabric registers it under: continuity:default.
-    if ($T_Continuity) {
-        Enable-Resourcepack $OptionsTxt "continuity:default"
-        Write-Log "options.txt ($Tier): resourcePacks += `"continuity:default`""
-    }
-
     # 3D Skin Layers -- config\skinlayers.json. No single master toggle; the 3D layers
     # are the per-body-part flags, so "off" clears them all, "on" sets them.
     $SkinlayersJson = Join-Path $TargetDir "config\skinlayers.json"
@@ -737,7 +812,7 @@ try {
     }
 
     # --- H: verify all mod jars ---
-    # Every tier installs the same 44 active jars -- all three now run Iris + Sodium 0.8.7.
+    # Every tier installs the same active jars -- all three run Iris + Sodium.
     # The active jar count is derived from the manifest for this tier. Non-mod
     # files (the resourcepack, and the shaderpack for shader tiers) live in
     # resourcepacks\ and shaderpacks\ and are verified separately in H.4 below.
@@ -876,7 +951,7 @@ try {
     Write-Log "Select this version in your launcher: $ProfileId"
     Write-Log "Verified jar count: $VerifiedCount / $ExpectedJarCount (+ $NonModsVerified other file(s))"
     if ($HasShaders) {
-        Write-Log "Tier applied: $Tier (RAM -Xmx$T_Xmx; shaders ON: Iris + Sodium 0.8.7 + Complementary $T_CompProfile)."
+        Write-Log "Tier applied: $Tier (RAM -Xmx$T_Xmx; shaders ON: Iris + Sodium + Complementary $T_CompProfile)."
     } else {
         Write-Log "Tier applied: $Tier (RAM -Xmx$T_Xmx; no shaders -- no shaderpack row is active for this tier)."
     }

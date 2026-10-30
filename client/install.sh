@@ -1,13 +1,17 @@
 #!/bin/sh
-# Fabric Friends Client Pack installer for Minecraft 1.21.11 / Fabric loader 0.19.3
-# POSIX sh. No Java required at any point.
+# NeoForge Friends Client Pack installer for Minecraft 1.21.1 / NeoForge 21.1.265
+# POSIX sh. Java 21 is needed once, to run the official NeoForge installer.
 set -eu
 
-FABRIC_MC_VERSION="1.21.11"
-FABRIC_LOADER_VERSION="0.19.3"
-FABRIC_LOADER_ID="fabric-loader-${FABRIC_LOADER_VERSION}-${FABRIC_MC_VERSION}"
+MC_VERSION="1.21.1"
+NEOFORGE_VERSION="21.1.265"
+NEOFORGE_ID="neoforge-${NEOFORGE_VERSION}"
 VERSION_MANIFEST_URL="https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
-FABRIC_PROFILE_URL="https://meta.fabricmc.net/v2/versions/loader/${FABRIC_MC_VERSION}/${FABRIC_LOADER_VERSION}/profile/json"
+NEOFORGE_INSTALLER_NAME="neoforge-${NEOFORGE_VERSION}-installer.jar"
+NEOFORGE_INSTALLER_URL="https://maven.neoforged.net/releases/net/neoforged/neoforge/${NEOFORGE_VERSION}/${NEOFORGE_INSTALLER_NAME}"
+# SHA-256 of the installer jar above (maven.neoforged.net publishes the same value in
+# <installer>.jar.sha256). Changing NEOFORGE_VERSION means changing this too.
+NEOFORGE_INSTALLER_SHA256="a547ccc30a80a675d1c61d04b55d10c45c39a86971e09731482c50a24399d1a2"
 
 # --- manifest resolution ---
 # mods.generated.tsv (the mod/resourcepack/shaderpack table) and purge.generated.txt
@@ -90,7 +94,7 @@ fi
 
 # --- per-tier settings ---
 # All tiers install ALL mods; tiers differ only in shader stack and written config.
-# Whether a tier gets Iris + the Sodium 0.8.7 swap is derived from the manifest below
+# Whether a tier gets Iris + Sodium is derived from the manifest below
 # (HAS_SHADERS), not set here.
 case "$TIER" in
     dalit)
@@ -101,7 +105,6 @@ case "$TIER" in
       T_COMP_PROFILE="POTATO"
       T_SOUND_PHYSICS=false
       T_LAMBDYN="fastest"
-      T_CONTINUITY=false
       T_SKINLAYERS=false
       T_SODIUM_ANIMATE_VISIBLE_ONLY=true
       T_SODIUM_RENDER_AHEAD=0
@@ -114,7 +117,6 @@ case "$TIER" in
       T_COMP_PROFILE="MEDIUM"
       T_SOUND_PHYSICS=true
       T_LAMBDYN="fancy"
-      T_CONTINUITY=true
       T_SKINLAYERS=true
       T_SODIUM_ANIMATE_VISIBLE_ONLY=true
       T_SODIUM_RENDER_AHEAD=2
@@ -127,7 +129,6 @@ case "$TIER" in
       T_COMP_PROFILE="HIGH"
       T_SOUND_PHYSICS=true
       T_LAMBDYN="fancy"
-      T_CONTINUITY=true
       T_SKINLAYERS=true
       T_SODIUM_ANIMATE_VISIBLE_ONLY=false
       T_SODIUM_RENDER_AHEAD=3
@@ -150,10 +151,15 @@ fi
 if [ ! -d "$TARGET_DIR" ]; then
   mkdir -p "$TARGET_DIR"
   warn "Game directory did not exist and was created at: $TARGET_DIR"
-  warn "Please launch vanilla ${FABRIC_MC_VERSION} once from your launcher first so assets download, then re-run this installer."
+  warn "Please launch vanilla ${MC_VERSION} once from your launcher first so assets download, then re-run this installer."
 fi
 
 log "[0/8] Using game directory: $TARGET_DIR"
+
+# versions/neoforge-<v>/neoforge-<v>.json exists once the NeoForge installer has run.
+# Its absence marks the first NeoForge install into this game directory (migration).
+NEOFORGE_VERSION_JSON="$TARGET_DIR/versions/${NEOFORGE_ID}/${NEOFORGE_ID}.json"
+LAUNCHER_PROFILES="$TARGET_DIR/launcher_profiles.json"
 
 MODS_DIR="$TARGET_DIR/mods"
 mkdir -p "$MODS_DIR"
@@ -331,7 +337,7 @@ set_lambdyn_lights_off() {
 # --- helper: ensure a pack id is present in options.txt's resourcePacks list ---
 # The line is a JSON array: resourcePacks:["vanilla","file/Foo.zip"]. This preserves
 # any packs the friend already enabled and appends the given id if it is absent.
-# Minecraft 1.21.11 references a resourcepacks/ file as "file/<filename>" -- the
+# Minecraft 1.21.1 references a resourcepacks/ file as "file/<filename>" -- the
 # "file/" prefix is confirmed present in the vanilla client's resource-pack class.
 enable_resourcepack() {
   _rp_file="$1"       # options.txt path
@@ -422,6 +428,42 @@ with open(path, "w") as f:
 # --- helper: report whether a config file will be created or merged (for logging) ---
 config_action() {
   if [ -f "$1" ]; then printf 'merged'; else printf 'created'; fi
+}
+
+# --- helper: find a Java 21+ runtime (the NeoForge installer needs one) ---
+# java_major BIN -> prints the major version of that java binary (nothing if it fails).
+java_major() {
+  "$1" -version 2>&1 | awk -F'"' '/version "/ { split($2, v, "."); print (v[1] == "1" ? v[2] : v[1]); exit }'
+}
+
+# find_java21 -> prints the path of the first java that is 21 or newer, else returns 1.
+# Order: JAVA_HOME, PATH, macOS java_home, system JDK folders, then the runtime the
+# Minecraft launcher bundles for 1.21 (java-runtime-delta is Java 21).
+find_java21() {
+  _fj_list="$TMPDIR_CREATED/java_candidates.txt"
+  : > "$_fj_list"
+  if [ -n "${JAVA_HOME:-}" ]; then printf '%s\n' "$JAVA_HOME/bin/java" >> "$_fj_list"; fi
+  if command -v java >/dev/null 2>&1; then command -v java >> "$_fj_list"; fi
+  if [ -x /usr/libexec/java_home ]; then
+    _fj_home="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
+    if [ -n "$_fj_home" ]; then printf '%s\n' "$_fj_home/bin/java" >> "$_fj_list"; fi
+  fi
+  for _fj in /usr/lib/jvm/*/bin/java \
+             /Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java \
+             "$TARGET_DIR"/runtime/java-runtime-*/*/java-runtime-*/bin/java \
+             "$TARGET_DIR"/runtime/java-runtime-*/*/java-runtime-*/jre.bundle/Contents/Home/bin/java; do
+    if [ -f "$_fj" ]; then printf '%s\n' "$_fj" >> "$_fj_list"; fi
+  done
+  while IFS= read -r _fj; do
+    [ -x "$_fj" ] || continue
+    _fj_major="$(java_major "$_fj")"
+    case "$_fj_major" in ''|*[!0-9]*) continue ;; esac
+    if [ "$_fj_major" -ge 21 ]; then
+      printf '%s' "$_fj"
+      return 0
+    fi
+  done < "$_fj_list"
+  return 1
 }
 
 TMPDIR_CREATED="$(mktemp -d)"
@@ -529,6 +571,37 @@ SHADERPACK_ZIP="$(awk -F"$TAB" '$4=="shaderpacks"{print $1; exit}' "$ACTIVE_ROWS
 ACTIVE_RESOURCEPACKS="$TMPDIR_CREATED/active_resourcepacks.txt"
 awk -F"$TAB" '$4=="resourcepacks"{print $1}' "$ACTIVE_ROWS" > "$ACTIVE_RESOURCEPACKS"
 
+# --- migration: the first NeoForge install into this game directory ---
+# An existing mods/ (the old Fabric 1.21.11 pack) is no use to NeoForge, and a leftover
+# Fabric jar can stop it starting. So, before anything is deleted: copy mods/ and config/
+# to timestamped folders, then drop every jar the manifest does not name (the generated
+# purge list below only knows the jars this pack ever shipped, not what a friend added).
+# Later runs find the NeoForge version already installed and skip all of this.
+KEEP_JARS="$TMPDIR_CREATED/keep_jars.txt"
+awk -F"$TAB" '$4=="mods"{print $1}' "$ACTIVE_ROWS" > "$KEEP_JARS"
+if [ ! -f "$NEOFORGE_VERSION_JSON" ]; then
+  log "First NeoForge install here: backing up mods/ and config/ before touching them..."
+  BACKUP_STAMP="$(date +%Y%m%d-%H%M%S)"
+  if [ -n "$(ls -A "$MODS_DIR" 2>/dev/null || true)" ]; then
+    cp -R "$MODS_DIR" "$TARGET_DIR/mods-backup-$BACKUP_STAMP"
+    log "Backed up mods/ to mods-backup-$BACKUP_STAMP"
+  fi
+  if [ -d "$TARGET_DIR/config" ] && [ -n "$(ls -A "$TARGET_DIR/config" 2>/dev/null || true)" ]; then
+    cp -R "$TARGET_DIR/config" "$TARGET_DIR/config-backup-$BACKUP_STAMP"
+    log "Backed up config/ to config-backup-$BACKUP_STAMP"
+  fi
+  for f in "$MODS_DIR"/*.jar; do
+    [ -f "$f" ] || continue
+    _mb="$(basename "$f")"
+    case "$_mb" in tl_skin_cape*.jar) continue ;; esac
+    if ! grep -qxF "$_mb" "$KEEP_JARS"; then
+      log "Removing jar that is not part of the NeoForge pack: $_mb"
+      rm -f "$f"
+    fi
+  done
+  rm -f "$TARGET_DIR/config/fabric_loader_dependencies.json"
+fi
+
 # --- reconcile the mods/ directory with this tier BEFORE anything downloads or the
 # duplicate check runs, so switching tiers never leaves an inactive or stale jar
 # behind. "side" in mods.json decides server-only removal (step [4/8]); the per-mod
@@ -541,7 +614,7 @@ while IFS="$TAB" read -r _rf _rp; do
     rm -f "$MODS_DIR/$_rf"
   fi
 done < "$INACTIVE_MODS"
-# 2. Any prefix owned by an INACTIVE row but NOT by any ACTIVE row (e.g. iris-fabric-
+# 2. Any prefix owned by an INACTIVE row but NOT by any ACTIVE row (e.g. iris-neoforge-
 # when this tier has no shaders) has every matching jar removed -- this also clears an
 # Iris/Sodium left behind at a DIFFERENT version than the one currently pinned.
 ACTIVE_PREFIXES="$(awk -F"$TAB" '$4=="mods"{print $5}' "$ACTIVE_ROWS" | sort -u)"
@@ -571,14 +644,14 @@ while IFS="$TAB" read -r _af _asha _aurl _adest _ap; do
 done < "$ACTIVE_ROWS"
 
 # --- A/B: vanilla base version ---
-VERSION_DIR="$TARGET_DIR/versions/${FABRIC_MC_VERSION}"
-VERSION_JSON="$VERSION_DIR/${FABRIC_MC_VERSION}.json"
-VERSION_JAR="$VERSION_DIR/${FABRIC_MC_VERSION}.jar"
+VERSION_DIR="$TARGET_DIR/versions/${MC_VERSION}"
+VERSION_JSON="$VERSION_DIR/${MC_VERSION}.json"
+VERSION_JAR="$VERSION_DIR/${MC_VERSION}.jar"
 
 if [ -f "$VERSION_JSON" ] && [ -f "$VERSION_JAR" ]; then
-  log "[1/8] Vanilla ${FABRIC_MC_VERSION} base version already present, skipping."
+  log "[1/8] Vanilla ${MC_VERSION} base version already present, skipping."
 else
-  log "[1/8] Installing vanilla ${FABRIC_MC_VERSION} base version..."
+  log "[1/8] Installing vanilla ${MC_VERSION} base version..."
   mkdir -p "$VERSION_DIR"
   MANIFEST_JSON="$TMPDIR_CREATED/version_manifest_v2.json"
   fetch "$VERSION_MANIFEST_URL" "$MANIFEST_JSON"
@@ -593,17 +666,17 @@ for v in data.get("versions", []):
     if v.get("id") == sys.argv[2]:
         print(v.get("url", ""))
         break
-' "$MANIFEST_JSON" "$FABRIC_MC_VERSION")"
+' "$MANIFEST_JSON" "$MC_VERSION")"
   elif command -v jq >/dev/null 2>&1; then
-    VERSION_URL="$(jq -r --arg id "$FABRIC_MC_VERSION" '.versions[] | select(.id == $id) | .url' "$MANIFEST_JSON" | head -n 1)"
+    VERSION_URL="$(jq -r --arg id "$MC_VERSION" '.versions[] | select(.id == $id) | .url' "$MANIFEST_JSON" | head -n 1)"
   else
-    VERSION_URL="$(grep -o "\"id\": *\"${FABRIC_MC_VERSION}\"[^}]*\"url\": *\"[^\"]*\"" "$MANIFEST_JSON" | grep -o '"url": *"[^"]*"' | sed 's/"url": *"//; s/"$//' | head -n 1)"
+    VERSION_URL="$(grep -o "\"id\": *\"${MC_VERSION}\"[^}]*\"url\": *\"[^\"]*\"" "$MANIFEST_JSON" | grep -o '"url": *"[^"]*"' | sed 's/"url": *"//; s/"$//' | head -n 1)"
     if [ -z "$VERSION_URL" ]; then
-      VERSION_URL="$(tr ',' '\n' < "$MANIFEST_JSON" | grep -B2 "\"id\": *\"${FABRIC_MC_VERSION}\"" | grep '"url"' | sed 's/.*"url": *"//; s/".*//' | head -n 1)"
+      VERSION_URL="$(tr ',' '\n' < "$MANIFEST_JSON" | grep -B2 "\"id\": *\"${MC_VERSION}\"" | grep '"url"' | sed 's/.*"url": *"//; s/".*//' | head -n 1)"
     fi
   fi
 
-  [ -n "$VERSION_URL" ] || die "Could not find version ${FABRIC_MC_VERSION} in ${VERSION_MANIFEST_URL}"
+  [ -n "$VERSION_URL" ] || die "Could not find version ${MC_VERSION} in ${VERSION_MANIFEST_URL}"
 
   fetch "$VERSION_URL" "$VERSION_JSON"
 
@@ -650,49 +723,41 @@ print(data["downloads"]["client"]["sha1"])
     rm -f "$VERSION_JAR"
     die "SHA-1 mismatch for ${VERSION_JAR}: expected $CLIENT_SHA1, got $ACTUAL_SHA1"
   fi
-  log "Vanilla ${FABRIC_MC_VERSION} client jar verified."
+  log "Vanilla ${MC_VERSION} client jar verified."
 fi
 
-# --- C: fabric loader profile ---
-log "[2/8] Installing Fabric loader profile (${FABRIC_LOADER_ID})..."
-PROFILE_JSON="$TMPDIR_CREATED/fabric_profile.json"
-fetch "$FABRIC_PROFILE_URL" "$PROFILE_JSON"
-
-if ! grep -q '"inheritsFrom"' "$PROFILE_JSON"; then
-  die "Fabric profile response missing \"inheritsFrom\": $FABRIC_PROFILE_URL"
-fi
-if ! grep -q 'net\.fabricmc\.loader\.impl\.launch\.knot\.KnotClient' "$PROFILE_JSON"; then
-  die "Fabric profile response missing KnotClient main class: $FABRIC_PROFILE_URL"
-fi
-
-PROFILE_ID=""
-if command -v python3 >/dev/null 2>&1; then
-  PROFILE_ID="$(python3 -c '
-import json, sys
-with open(sys.argv[1]) as f:
-    data = json.load(f)
-print(data["id"])
-' "$PROFILE_JSON")"
-elif command -v jq >/dev/null 2>&1; then
-  PROFILE_ID="$(jq -r '.id' "$PROFILE_JSON")"
+# --- C: NeoForge ---
+# The official installer does the work: --install-client writes versions/neoforge-<v>/,
+# its libraries, and a launcher profile. TLauncher only needs the version folder.
+log "[2/8] Installing NeoForge ${NEOFORGE_VERSION} (${NEOFORGE_ID})..."
+PROFILE_ID="$NEOFORGE_ID"
+if [ -f "$NEOFORGE_VERSION_JSON" ]; then
+  log "NeoForge ${NEOFORGE_VERSION} already installed, skipping."
+elif [ "${MCF_SKIP_LOADER_INSTALL:-}" = "1" ]; then
+  # Testing only (dry runs on a throwaway directory). Never set this for real players.
+  warn "MCF_SKIP_LOADER_INSTALL=1: NOT installing NeoForge."
 else
-  PROFILE_ID="$(grep -o '"id" *: *"[^"]*"' "$PROFILE_JSON" | head -n 1 | sed 's/.*"id" *: *"//; s/"$//')"
+  JAVA_BIN="$(find_java21)" || die "Java 21 or newer is required to install NeoForge, and none was found.
+Install it, then re-run this installer:
+  Windows/macOS/Linux: https://adoptium.net/temurin/releases/?version=21  (pick the JRE or JDK, 21)
+  macOS (Homebrew):    brew install --cask temurin@21
+  Debian/Ubuntu:       sudo apt install openjdk-21-jre-headless
+  Fedora:              sudo dnf install java-21-openjdk-headless
+Or start Minecraft 1.21.1 once from the official launcher (it downloads a Java 21 runtime) and re-run."
+  log "Using Java: $JAVA_BIN"
+  download_verify "$NEOFORGE_INSTALLER_NAME" "$NEOFORGE_INSTALLER_SHA256" "$NEOFORGE_INSTALLER_URL" "$TMPDIR_CREATED"
+  # The installer wants an existing launcher_profiles.json (a fresh .minecraft has none).
+  if [ ! -f "$LAUNCHER_PROFILES" ]; then
+    printf '%s\n' '{"profiles":{},"settings":{},"version":3}' > "$LAUNCHER_PROFILES"
+  fi
+  "$JAVA_BIN" -jar "$TMPDIR_CREATED/$NEOFORGE_INSTALLER_NAME" --install-client "$TARGET_DIR" \
+    || die "The NeoForge installer failed. See its output above."
+  [ -f "$NEOFORGE_VERSION_JSON" ] || die "The NeoForge installer finished but ${NEOFORGE_VERSION_JSON} is missing."
+  log "NeoForge ${NEOFORGE_VERSION} installed to versions/${NEOFORGE_ID}/"
 fi
-
-[ -n "$PROFILE_ID" ] && [ "$PROFILE_ID" != "null" ] || die "Could not read id from Fabric profile response"
-
-if [ "$PROFILE_ID" != "$FABRIC_LOADER_ID" ]; then
-  warn "Fabric profile id ($PROFILE_ID) differs from expected ($FABRIC_LOADER_ID); continuing with actual id."
-fi
-
-FABRIC_VERSION_DIR="$TARGET_DIR/versions/${PROFILE_ID}"
-mkdir -p "$FABRIC_VERSION_DIR"
-cp "$PROFILE_JSON" "$FABRIC_VERSION_DIR/${PROFILE_ID}.json"
-log "Fabric loader profile written to versions/${PROFILE_ID}/${PROFILE_ID}.json"
 
 # --- D: launcher_profiles.json ---
 log "[3/8] Registering launcher profile..."
-LAUNCHER_PROFILES="$TARGET_DIR/launcher_profiles.json"
 
 # When a tier is set, its RAM allocation goes in the profile's javaArgs field
 # (the launcher otherwise applies its own default JVM args). Empty when no tier,
@@ -724,17 +789,17 @@ if "profiles" not in data or not isinstance(data.get("profiles"), dict):
 
 # Preserve any other fields on our profile object; only our known keys are
 # authoritative, and javaArgs is set/removed based on whether a tier was given.
-prof = data["profiles"].get("fabric-loader-1.21.11")
+prof = data["profiles"].get(profile_id)
 if not isinstance(prof, dict):
     prof = {}
 prof.setdefault("created", "2026-08-11T00:00:00.000Z")
-prof["name"] = "fabric-loader-1.21.11"
+prof["name"] = profile_id
 prof["type"] = "custom"
 prof["lastVersionId"] = profile_id
 prof["icon"] = "TNT"
 if java_args:
     prof["javaArgs"] = java_args
-data["profiles"]["fabric-loader-1.21.11"] = prof
+data["profiles"][profile_id] = prof
 
 with open(path, "w") as f:
     json.dump(data, f, indent=2)
@@ -756,7 +821,7 @@ elif command -v jq >/dev/null 2>&1; then
   fi
   NEW_JSON="$TMPDIR_CREATED/launcher_profiles.new.json"
   if jq --arg lastVersionId "$PROFILE_ID" --arg javaArgs "$JAVA_ARGS" \
-    '.profiles["fabric-loader-1.21.11"] = ((.profiles["fabric-loader-1.21.11"] // {}) + {"name":"fabric-loader-1.21.11","type":"custom","created":((.profiles["fabric-loader-1.21.11"].created) // "2026-08-11T00:00:00.000Z"),"lastVersionId":$lastVersionId,"icon":"TNT"} + (if $javaArgs == "" then {} else {"javaArgs":$javaArgs} end))' \
+    '.profiles[$lastVersionId] = ((.profiles[$lastVersionId] // {}) + {"name":$lastVersionId,"type":"custom","created":((.profiles[$lastVersionId].created) // "2026-08-11T00:00:00.000Z"),"lastVersionId":$lastVersionId,"icon":"TNT"} + (if $javaArgs == "" then {} else {"javaArgs":$javaArgs} end))' \
     "$BASE_JSON" > "$NEW_JSON"; then
     mv "$NEW_JSON" "$LAUNCHER_PROFILES"
     if [ -n "$JAVA_ARGS" ]; then
@@ -789,7 +854,8 @@ while IFS= read -r prefix; do
       ;;
   esac
   for f in "$MODS_DIR"/"$prefix"*; do
-    if [ -f "$f" ]; then
+    # Never delete a jar this tier installs (a case-insensitive disk can match one).
+    if [ -f "$f" ] && ! grep -qxF "$(basename "$f")" "$KEEP_JARS"; then
       log "Removing server-only jar: $(basename "$f")"
       rm -f "$f"
     fi
@@ -818,7 +884,7 @@ while IFS="$TAB" read -r dfname dsha durl ddest dprefix; do
 done < "$ACTIVE_ROWS"
 
 if [ "$HAS_SHADERS" = "1" ]; then
-  log "Shaders installed for '$TIER': Iris, Sodium 0.8.7, Complementary Unbound (shaderpacks/$SHADERPACK_ZIP)."
+  log "Shaders installed for '$TIER': Iris, Sodium, Complementary Unbound (shaderpacks/$SHADERPACK_ZIP)."
 fi
 
 # --- G: remove the retired modflared (Cloudflare tunnel) config ---
@@ -878,21 +944,6 @@ entityDistanceScaling $T_ENTITY_DIST_SCALE" | merge_kv_file "$OPTIONS_TXT" ":"
   printf '%s\n' "enabled $T_SOUND_PHYSICS" | merge_kv_file "$SOUNDPHYSICS_PROPS" "="
   log "config/soundphysics.properties ($TIER, $_sp_action): enabled=$T_SOUND_PHYSICS"
 
-  # Continuity -- config/continuity.json. Turning it "off" disables both
-  # connected and emissive textures; "on" enables them.
-  CONTINUITY_JSON="$TARGET_DIR/config/continuity.json"
-  _cont_action="$(config_action "$CONTINUITY_JSON")"
-  if json_merge "$CONTINUITY_JSON" "{\"connected_textures\":$T_CONTINUITY,\"emissive_textures\":$T_CONTINUITY}"; then
-    log "config/continuity.json ($TIER, $_cont_action): connected_textures=$T_CONTINUITY emissive_textures=$T_CONTINUITY"
-  fi
-  # Continuity ships its own connected-textures pack (seamless glass that keeps the
-  # vanilla glint) as a Fabric built-in pack, off until listed in resourcePacks.
-  # Its id is the Identifier string Fabric registers it under: continuity:default.
-  if [ "$T_CONTINUITY" = "true" ]; then
-    enable_resourcepack "$OPTIONS_TXT" "continuity:default"
-    log "options.txt ($TIER): resourcePacks += \"continuity:default\""
-  fi
-
   # 3D Skin Layers -- config/skinlayers.json. No single master toggle; the 3D
   # layers are the per-body-part flags, so "off" clears them all, "on" sets them.
   SKINLAYERS_JSON="$TARGET_DIR/config/skinlayers.json"
@@ -945,7 +996,7 @@ enableShaders true" | merge_kv_file "$IRIS_PROPERTIES" "="
 fi
 
 # --- H: verify all mod jars ---
-# Every tier installs the same 44 active jars -- all three now run Iris + Sodium 0.8.7.
+# Every tier installs the same active jars -- all three run Iris + Sodium.
 # The active jar count is derived from the manifest for this tier. Non-mod files
 # (the resourcepack, and the shaderpack for shader tiers) live in resourcepacks/ and
 # shaderpacks/ and are verified separately in H.4 below.
@@ -1085,7 +1136,7 @@ log "Game directory: $TARGET_DIR"
 log "Select this version in your launcher: $PROFILE_ID"
 log "Verified jar count: $VERIFIED_COUNT / $EXPECTED_JAR_COUNT (+ $NONMODS_VERIFIED other file(s))"
 if [ "$HAS_SHADERS" = "1" ]; then
-  log "Tier applied: $TIER (RAM -Xmx${T_XMX}; shaders ON: Iris + Sodium 0.8.7 + Complementary $T_COMP_PROFILE)."
+  log "Tier applied: $TIER (RAM -Xmx${T_XMX}; shaders ON: Iris + Sodium + Complementary $T_COMP_PROFILE)."
 else
   log "Tier applied: $TIER (RAM -Xmx${T_XMX}; no shaders -- no shaderpack row is active for this tier)."
 fi
