@@ -4,7 +4,7 @@ Working notes for this repo. Read this before changing anything.
 
 ## What this repo is
 
-A Minecraft **Fabric 1.21.11** server and its matching client modpack. `mods.json` at the
+A Minecraft **NeoForge 1.21.1** (21.1.265, Java 21) server and its matching client modpack. `mods.json` at the
 repo root is the single source of truth for the mod list. Everything else that names a mod
 is **generated** from it.
 
@@ -15,6 +15,7 @@ server/
   docker-compose.yml          the server + the lazymc proxy that sleeps/wakes it
   bootstrap                   restore the world from Backblaze B2 if absent, then start
   restart                     save the world, recreate the containers, report
+  check-world                 refuses to start unless data/world is Minecraft 1.21.1 or older
   .env                        NOT COMMITTED. RCON_PASSWORD + the four Backblaze B2 values.
   .env.example                template for .env
   mods.generated.env          GENERATED. MODRINTH_PROJECTS=...
@@ -58,7 +59,7 @@ client/
 ### 1. Get the facts from Modrinth
 
 You need the project **slug** — the last path segment of the Modrinth URL
-(`modrinth.com/mod/fabric-api` -> `fabric-api`). Confirm it has a build for Fabric 1.21.11.
+(`modrinth.com/mod/fabric-api` -> `fabric-api`). Confirm it has a build for NeoForge 1.21.1.
 
 If you are pinning a specific build, you need its **version ID** too: open the version's
 page and take the ID from the URL (`.../version/6qAuTtLR` -> `6qAuTtLR`), or query
@@ -70,13 +71,13 @@ Append to the `mods` array:
 
 ```json
 {
-  "name": "Fabric API",
-  "slug": "fabric-api",
+  "name": "Lithium",
+  "slug": "lithium",
   "side": "both",
   "type": "mod",
-  "version": null,
+  "version": "DDUrRVCA",
   "notes": "",
-  "client_version": "6qAuTtLR",
+  "client_version": "DDUrRVCA",
   "client_tiers": null
 }
 ```
@@ -87,7 +88,8 @@ Append to the `mods` array:
 | `slug`           | Modrinth project slug.                                                                                                                                                                                                                                       |
 | `side`           | `server`, `client`, or `both`. **This alone decides where the mod lands.** A `server` mod never reaches a client and is actively purged from a friend's `mods/`. A `both` mod must exist on both sides at the same version or clients are rejected at login. |
 | `type`           | `mod`, `datapack`, `resourcepack`, or `shaderpack`. Decides the client install directory (`mods/`, `resourcepacks/`, `shaderpacks/`) and whether the server token gets a `datapack:` prefix.                                                                 |
-| `version`        | The **server** pin, written exactly as `MODRINTH_PROJECTS` needs it (usually the version _number_, e.g. `21.11.9+fabric-1.21.11`). `null` lets the server resolve the newest build.                                                                          |
+| `version`        | The **server** pin, written exactly as `MODRINTH_PROJECTS` needs it (the Modrinth version _ID_ here, same as `client_version`, so server and clients get the identical jar; a version number also works). `null` lets the server resolve the newest build.                                                                          |
+| `prefix`         | _Optional._ Overrides the filename prefix `generate` derives. Only needed when the derived prefix is also a prefix of another mod's jar (Create's `create-` vs `create-aeronautics-bundled-`); set it to a longer prefix of the same filename. |
 | `notes`          | Free text. Record anything non-obvious — why a version is pinned, what depends on it.                                                                                                                                                                        |
 | `client_version` | _client/both only._ The Modrinth **version ID** the installers pin, so every friend gets byte-identical jars. `null` resolves the newest at generate time.                                                                                                   |
 | `client_tiers`   | _client/both only._ `null` for every tier, or a subset like `["pandit", "modi"]`.                                                                                                                                                                            |
@@ -101,8 +103,7 @@ describe the same build for a `both` mod.
 
 ### Mods not on Modrinth (`url` entries)
 
-A jar that Modrinth does not host (e.g. a GitHub release asset, like the Sable / Create
-Simulated / Create Aeronautics port) is declared with `url` + `sha256` **instead of**
+A jar that Modrinth does not host (e.g. a GitHub release asset) is declared with `url` + `sha256` **instead of**
 `version` / `client_version`:
 
 ```json
@@ -127,8 +128,7 @@ does **not** resolve dependencies, so every dependency must be its own entry. On
 
 `slug` may repeat **only** when every entry sharing it is client-side with non-overlapping
 `client_tiers` — one build to one set of tiers, a different build to the rest. (`sodium` used
-to be split that way, before every tier got shaders and Iris' pinned 0.8.7 became the only
-build shipped.) `scripts/generate` rejects any other duplicate and rejects two builds of one
+to be split that way, when only some tiers had shaders.) `scripts/generate` rejects any other duplicate and rejects two builds of one
 mod reaching a single tier. An empty `client_tiers` list is **not** a way to park an entry on
 no tier: `""` is not a tier name and `generate` fails on it. Delete the entry instead — the
 installers sweep a superseded build off a friend's disk by prefix (Tiers, below).
@@ -209,7 +209,7 @@ for their tier, and purges server-only jars.
 
 A row deleted from `mods.json` is simply gone from the manifest, so the installer no longer
 knows its jar and would leave it on a friend's disk. When removing a client/both mod
-outright, add its filename prefix (the TSV `prefix` column, e.g. `aeronautics-fabric-`) to
+outright, add its filename prefix (the TSV `prefix` column, e.g. `lithium-fabric-`) to
 the top-level `retired_prefixes` list in `mods.json`; `generate` appends it to
 `purge.generated.txt`, and refuses a prefix that still matches a shipped jar.
 
@@ -220,10 +220,18 @@ all, e.g. `Clear Glass 1.3.0.zip`) to the top-level `retired_resourcepacks` list
 installers delete that one file. Minecraft drops the now-missing pack from `resourcePacks`
 on its next launch, so `options.txt` needs no edit.
 
-Connected glass comes from Continuity's built-in pack `continuity:default`, which the
-installers add to `resourcePacks` on every tier whose `connected_textures` is on. Its glass
-rules carry `resourceCondition=textures/block/glass.png`, so any resource pack that
-overrides `glass.png` silently switches them off.
+Connected glass comes from Fusion (`fusion-connected-textures`), which replaced Continuity
+(Fabric-only). It needs no installer config.
+
+## Client loader install
+
+The installers run the official NeoForge installer (`java -jar neoforge-21.1.265-installer.jar
+--install-client <dir>`), pinned by SHA-256, and need Java 21 for that one step. On the
+first NeoForge install into a game directory (no `versions/neoforge-21.1.265/`) they copy
+`mods/` and `config/` to `mods-backup-<stamp>` / `config-backup-<stamp>` and then delete every
+jar the manifest does not name. `MCF_SKIP_LOADER_INSTALL=1` skips the loader step for dry
+runs on a throwaway directory; never set it for real players. TLauncher needs only the
+`neoforge-21.1.265` version folder, which the installer creates.
 
 ## How the client gets its list
 
@@ -254,6 +262,16 @@ restores it on a machine with no world, so rules 6 and 7 still apply. `bootstrap
 shells out to `restic/restic:latest`, so the VM needs no restic install; like the client
 installers it depends on nothing exotic — no `jq`, no `python3`. Keep it that way.
 
+## World version guard (do not remove)
+
+The live world was created on Fabric 1.21.11 (DataVersion 4671). NeoForge 1.21.1 is
+DataVersion 3955 and can corrupt a newer world, so the world must be converted with
+[minecraft-1.21.1-backport](https://github.com/KiraKami-dev/minecraft-1.21.1-backport)
+(`docs/BACKPORT.md`) first. `server/check-world` reads `data/world/level.dat` and exits
+nonzero above 3955 (or when it cannot read it); `restart` and `bootstrap` run it before any
+`compose up`. Always start the stack with those two, never a bare `docker compose up`, and
+stop the stack before `git pull` during the cutover (`server/README.md`).
+
 ## Sleeping when empty
 
 `mc` is not reachable directly: `lazymc` (lazymc-docker-proxy) owns port 25565, starts the
@@ -269,9 +287,9 @@ and mutually exclusive. They set render distances, RAM, and per-mod configs. Whe
 gets shaders is **derived from the manifest** (a tier has shaders iff some active row has
 `dest` = `shaderpacks`), not hardcoded — do not reintroduce a per-tier shader flag.
 
-All three tiers now run shaders: Iris + Sodium 0.8.7 + Complementary Unbound, at profile
-`POTATO` (dalit) / `MEDIUM` (pandit) / `HIGH` (modi). Iris hard-pins Sodium 0.8.7, so that
-is the only Sodium build in `mods.json`. dalit keeps every other low-end setting it had —
+All three tiers run shaders: Iris + Sodium + Complementary Unbound, at profile
+`POTATO` (dalit) / `MEDIUM` (pandit) / `HIGH` (modi). Iris pins the Sodium it works with,
+so there is a single Sodium build in `mods.json`. dalit keeps every other low-end setting it had —
 render distance 5, `-Xmx3G`, sound physics off, dynamic lights off, no connected textures.
 The no-shaders branches in both installers stay: `HAS_SHADERS` is manifest-derived, so a
 future tier that drops the shaderpack row still installs correctly.
@@ -286,7 +304,7 @@ friend cannot be expected to delete the right jar by hand.
 ## Changing installer config values
 
 The per-tier config blocks write real files that mods parse: `options.txt`,
-`config/sodium-options.json`, `config/soundphysics.properties`, `config/continuity.json`,
+`config/sodium-options.json`, `config/soundphysics.properties`,
 `config/skinlayers.json`, `config/lambdynlights.toml`, `config/iris.properties`. Each key
 and value there was verified against the mod's own compiled classes. Before changing any
 value, confirm it is in that setting's actual domain — name the enum's constants or the

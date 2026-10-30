@@ -1,6 +1,6 @@
 # Server
 
-Fabric 1.21.11 on [`itzg/minecraft-server`](https://github.com/itzg/docker-minecraft-server).
+NeoForge 1.21.1 (21.1.265, Java 21) on [`itzg/minecraft-server`](https://github.com/itzg/docker-minecraft-server).
 The mod list is **not** written here — it is generated into `mods.generated.env` from
 `../mods.json` by `../scripts/generate`.
 
@@ -11,6 +11,7 @@ The mod list is **not** written here — it is generated into `mods.generated.en
 | `docker-compose.yml` | yes                 | The server and the lazymc proxy that sleeps/wakes it, exactly as they run. Contains no secrets.                              |
 | `bootstrap`          | yes                 | Restore the world from Backblaze B2 if this machine has none, then start. Run this first on a fresh machine.                 |
 | `restart`            | yes                 | Save the world, recreate the containers, report. The deploy step.                                                            |
+| `check-world`        | yes                 | Refuses to start unless `data/world` is Minecraft 1.21.1 or older. Run by `restart` and `bootstrap`.                        |
 | `.env.example`       | yes                 | Template for `.env`.                                                                                                         |
 | `.env`               | **no** — gitignored | `RCON_PASSWORD`, `PLAYIT_SECRET_KEY`, plus the four Backblaze B2 values `bootstrap` restores from. This repo is public; the real values live only here and on the VM. |
 | `mods.generated.env` | yes                 | `MODRINTH_PROJECTS=...`, generated. Never hand-edit.                                                                         |
@@ -55,8 +56,9 @@ If it cannot read the repository — wrong key, wrong `RESTIC_PASSWORD`, B2 unre
 it **refuses to start** rather than generating a fresh world on top of a perfectly good
 backup. Fix `.env` and re-run.
 
-The container downloads every mod in `MODRINTH_PROJECTS` on boot, plus their required
-dependencies (`MODRINTH_DOWNLOAD_DEPENDENCIES: required`). First boot takes a few minutes.
+The container downloads every mod in `MODRINTH_PROJECTS` on boot. Each entry is pinned to a
+version ID and every dependency is its own entry, so nothing else is resolved. First boot
+takes a few minutes.
 Because of lazymc (below), that first boot happens when the first player joins.
 
 ## Sleeping when empty
@@ -84,6 +86,36 @@ tunnel and its public address are configured in the playit.gg dashboard, pointin
   host; the container is the published upstream image.
 
 To force the server up without joining: `docker compose start mc`.
+
+## Cutting over from Fabric 1.21.11
+
+The live world is Fabric 1.21.11 (DataVersion 4671). NeoForge 1.21.1 must never open it
+unconverted, so `restart` and `bootstrap` run `check-world` first and refuse to start
+above DataVersion 3955. lazymc does not bypass that: it only `docker start`s the existing
+`mc` container, and `restart`/`bootstrap` are what create it from the new compose file. The
+one gap is a running stack: `git pull` changes nothing in a running container, but a
+plain `docker compose up -d` would recreate `mc` without the check. So **stop the stack
+before pulling, convert, then restart with `./restart`** (never a bare `docker compose up`).
+
+On the VM, in order:
+
+1. Announce the downtime. Everyone reinstalls the client afterwards (the root `README.md`).
+2. `cd /root/mc-repo/server && docker compose exec mc rcon-cli "save-all flush"`, then
+   `docker compose down`. lazymc is down too, so nothing can wake `mc`.
+3. Back up: `tar czf ~/world-fabric-1.21.11-$(date +%F).tar.gz -C data world`. Keep it off the VM too.
+4. Convert that archive on a workstation with
+   [minecraft-1.21.1-backport](https://github.com/KiraKami-dev/minecraft-1.21.1-backport):
+   `./convert.sh world-final.tar.gz ~/backport-out`, then read `summary.txt` (scan errors 0,
+   `NOT allowed: 0`, smoke test 0 errors). Steps are in its `docs/BACKPORT.md`.
+5. Upload: `mv data/world data/world-fabric-1.21.11`, then
+   `rsync -a user@workstation:backport-out/world/ data/world/`. Also
+   `mv data/mods data/mods-fabric-1.21.11` (NeoForge cannot load Fabric jars).
+6. `git pull`, then `./restart --logs`. The guard passes on the converted world. Join to
+   wake lazymc and watch for `Done`.
+7. Rollback if it fails: `docker compose down`, `git checkout` the previous commit,
+   `mv data/world data/world-failed && mv data/world-fabric-1.21.11 data/world`,
+   `mv data/mods-fabric-1.21.11 data/mods`, `./restart`. (Do this with the old
+   commit checked out, since the guard would refuse the Fabric world on the new one.)
 
 ## Deploying a mod change
 
