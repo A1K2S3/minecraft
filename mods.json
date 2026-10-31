@@ -12,6 +12,7 @@
     "AmbientSounds_FABRIC_",
     "BiomesOPlenty-fabric-",
     "CreativeCore_FABRIC_",
+    "FantasticWings-",
     "GlitchCore-fabric-",
     "ImmediatelyFast-Fabric-",
     "InventoryProfilesNext-fabric-",
@@ -253,16 +254,6 @@
       "version": "wxGXaJMA",
       "notes": "",
       "client_version": "wxGXaJMA",
-      "client_tiers": null
-    },
-    {
-      "name": "Fantastic Wings",
-      "slug": "fantastic-wings",
-      "side": "both",
-      "type": "mod",
-      "version": "hX5hYT5c",
-      "notes": "",
-      "client_version": "hX5hYT5c",
       "client_tiers": null
     },
     {

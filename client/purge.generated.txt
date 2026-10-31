@@ -24,6 +24,7 @@ YungsBetterStrongholds-
 AmbientSounds_FABRIC_
 BiomesOPlenty-fabric-
 CreativeCore_FABRIC_
+FantasticWings-
 GlitchCore-fabric-
 ImmediatelyFast-Fabric-
 InventoryProfilesNext-fabric-
