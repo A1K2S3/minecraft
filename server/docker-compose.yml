@@ -117,6 +117,11 @@ services:
       # newer than ./config; without this the image would keep the stale copy
       # and a committed config change would never land.
       SYNC_SKIP_NEWER_IN_DESTINATION: "false"
+      # Console commands run over RCON on every container start (lazymc wakes
+      # included), once the server is listening. One command per line. Gamerules
+      # live here so they are in git, not only in the world's level.dat.
+      RCON_CMDS_STARTUP: |
+        gamerule playersSleepingPercentage 30
       # Every mod, dependency included, is its own pinned entry in MODRINTH_PROJECTS,
       # so the container resolves nothing on its own.
 

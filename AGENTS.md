@@ -234,6 +234,11 @@ the stale VM copy would always look newer and win). Change a server config there
 the VM: a VM edit is overwritten at the next start. Start from the server's current file so
 unrelated values are preserved. Detail in `server/README.md` ("Changing a mod's config").
 
+Every server setting belongs in git, not just applied live. Gamerules and other console
+commands go in `RCON_CMDS_STARTUP` in `server/docker-compose.yml`, which the image runs on
+every container start; running the same command over RCON is fine for immediate effect,
+but the compose line is what makes it stick on a restored or fresh world.
+
 ## Client loader install
 
 The installers run the official NeoForge installer (`java -jar neoforge-21.1.265-installer.jar

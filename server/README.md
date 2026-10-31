@@ -168,6 +168,11 @@ stays as it is), change the value, commit, push, then `git pull` and `./server/r
 the VM. Waystones syncs its config to clients at login, so `waystones-common.toml`
 (teleport XP cost disabled) needs nothing on friends' machines.
 
+Gamerules are not files: they live in the world's `level.dat`. Keep them in git as lines of
+`RCON_CMDS_STARTUP` in `docker-compose.yml`, which the image runs over RCON on every
+container start (lazymc wakes included) once the server is listening. Currently:
+`gamerule playersSleepingPercentage 30` (30% of online players in bed skips the night).
+
 ## Server-only vs shared mods
 
 `side` in `mods.json` decides this and nothing else does. A mod marked `server` never
