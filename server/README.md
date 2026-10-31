@@ -15,6 +15,7 @@ The mod list is **not** written here — it is generated into `mods.generated.en
 | `.env.example`       | yes                 | Template for `.env`.                                                                                                         |
 | `.env`               | **no** — gitignored | `RCON_PASSWORD`, `PLAYIT_SECRET_KEY`, plus the four Backblaze B2 values `bootstrap` restores from. This repo is public; the real values live only here and on the VM. |
 | `mods.generated.env` | yes                 | `MODRINTH_PROJECTS=...`, generated. Never hand-edit.                                                                         |
+| `config/`            | yes                 | Server mod configs. Copied over `data/config/` on every start, so a committed change wins. See "Changing a mod's config".     |
 | `data/`              | no — gitignored     | World, logs, and the mods the container downloads.                                                                           |
 | `.restore-stage/`    | no — gitignored     | Scratch space `bootstrap` downloads a snapshot into. Deleted on exit.                                                        |
 
@@ -152,6 +153,20 @@ particular, never edit `MODRINTH_PROJECTS` by hand on the server, because the ne
 
 Removing a mod from `mods.json` stops the container downloading it, but does not delete
 the jar already sitting in `data/mods/`. Delete it there too, then restart.
+
+## Changing a mod's config
+
+Server-side mod configs live in `server/config/`, mounted read-only at `/config`. On every
+start the image copies each file there over its namesake in `data/config/`
+(`SYNC_SKIP_NEWER_IN_DESTINATION=false`, because the mods rewrite their files on each boot
+and would otherwise look newer). A file in `server/config/` is therefore the only copy that
+counts: an edit made on the VM in `data/config/` is undone at the next start. Configs not in
+`server/config/` are left alone.
+
+To change one: copy the server's current file into `server/config/` (so every other value
+stays as it is), change the value, commit, push, then `git pull` and `./server/restart` on
+the VM. Waystones syncs its config to clients at login, so `waystones-common.toml`
+(teleport XP cost disabled) needs nothing on friends' machines.
 
 ## Server-only vs shared mods
 

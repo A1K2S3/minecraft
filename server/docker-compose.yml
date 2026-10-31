@@ -51,6 +51,9 @@ services:
     # No published port: all traffic goes through lazymc.
     volumes:
       - ./data:/data
+      # Server mod configs kept in git. The image copies ./config into
+      # data/config on every start (see SYNC_SKIP_NEWER_IN_DESTINATION below).
+      - ./config:/config:ro
     # lazymc owns this container's lifecycle. Any restart policy would bring it
     # straight back up every time lazymc puts it to sleep.
     restart: "no"
@@ -110,6 +113,10 @@ services:
       OPS: "Guardian:offline,Chaukidaar:offline,Sid19s:offline"
       OP_PERMISSION_LEVEL: "4"
       RCON_PASSWORD: "${RCON_PASSWORD}"
+      # Mods rewrite their config files on every boot, which makes data/config
+      # newer than ./config; without this the image would keep the stale copy
+      # and a committed config change would never land.
+      SYNC_SKIP_NEWER_IN_DESTINATION: "false"
       # Every mod, dependency included, is its own pinned entry in MODRINTH_PROJECTS,
       # so the container resolves nothing on its own.
 

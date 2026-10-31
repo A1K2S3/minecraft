@@ -19,6 +19,7 @@ server/
   .env                        NOT COMMITTED. RCON_PASSWORD + the four Backblaze B2 values.
   .env.example                template for .env
   mods.generated.env          GENERATED. MODRINTH_PROJECTS=...
+  config/                     server mod configs, copied over data/config/ on every start
 client/
   install.sh                  Linux/macOS installer
   install.ps1                 Windows installer
@@ -221,7 +222,17 @@ installers delete that one file. Minecraft drops the now-missing pack from `reso
 on its next launch, so `options.txt` needs no edit.
 
 Connected glass comes from Fusion (`fusion-connected-textures`), which replaced Continuity
-(Fabric-only). It needs no installer config.
+(Fabric-only). Fusion is only the engine; the glass itself is the Fusion Connected Glass
+resource pack, which the installers enable like any other `resourcepack` row.
+
+## Server mod configs
+
+`server/config/` holds server-side mod configs in git. The compose file mounts it at
+`/config`, and the image copies it over `data/config/` on every start
+(`SYNC_SKIP_NEWER_IN_DESTINATION=false` — mods rewrite their configs on boot, so without it
+the stale VM copy would always look newer and win). Change a server config there, never on
+the VM: a VM edit is overwritten at the next start. Start from the server's current file so
+unrelated values are preserved. Detail in `server/README.md` ("Changing a mod's config").
 
 ## Client loader install
 
