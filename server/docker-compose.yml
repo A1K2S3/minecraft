@@ -110,7 +110,7 @@ services:
       # that is the UUID players actually join with, and the lookup fails outright
       # for names with no Mojang account (Sid19s), which aborts startup.
       # Add new ops the same way: Name:offline.
-      OPS: "Guardian:offline,Chaukidaar:offline,Sid19s:offline"
+      OPS: "Guardian:offline,Chaukidaar:offline,Sid19s:offline,Izze_bix:offline"
       OP_PERMISSION_LEVEL: "4"
       RCON_PASSWORD: "${RCON_PASSWORD}"
       # Mods rewrite their config files on every boot, which makes data/config
